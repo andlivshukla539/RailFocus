@@ -114,17 +114,19 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveBorderColor = selected
-        ? LuxeColors.gold
-        : (borderColor ?? Colors.white.withValues(alpha: 0.1));
+    final effectiveBorderColor =
+        selected
+            ? LuxeColors.gold
+            : (borderColor ?? Colors.white.withValues(alpha: 0.1));
 
     return GestureDetector(
-      onTap: onTap != null
-          ? () {
-        HapticFeedback.lightImpact();
-        onTap!();
-      }
-          : null,
+      onTap:
+          onTap != null
+              ? () {
+                HapticFeedback.lightImpact();
+                onTap!();
+              }
+              : null,
       child: Container(
         margin: margin,
         decoration: BoxDecoration(
@@ -221,12 +223,13 @@ class _LuxeButtonState extends State<LuxeButton>
       animation: _pulseController,
       builder: (context, child) {
         return GestureDetector(
-          onTap: enabled
-              ? () {
-            HapticFeedback.mediumImpact();
-            widget.onPressed?.call();
-          }
-              : null,
+          onTap:
+              enabled
+                  ? () {
+                    HapticFeedback.mediumImpact();
+                    widget.onPressed?.call();
+                  }
+                  : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             height: 60,
@@ -235,60 +238,65 @@ class _LuxeButtonState extends State<LuxeButton>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: enabled
-                    ? LuxeColors.sunriseGold
-                    : [LuxeColors.slate, LuxeColors.charcoal],
+                colors:
+                    enabled
+                        ? LuxeColors.sunriseGold
+                        : [LuxeColors.slate, LuxeColors.charcoal],
               ),
-              boxShadow: enabled
-                  ? [
-                BoxShadow(
-                  color: LuxeColors.gold.withValues(
-                    alpha: 0.3 + _pulseController.value * 0.2,
-                  ),
-                  blurRadius: 20 + _pulseController.value * 10,
-                  spreadRadius: _pulseController.value * 5,
-                ),
-              ]
-                  : null,
+              boxShadow:
+                  enabled
+                      ? [
+                        BoxShadow(
+                          color: LuxeColors.gold.withValues(
+                            alpha: 0.3 + _pulseController.value * 0.2,
+                          ),
+                          blurRadius: 20 + _pulseController.value * 10,
+                          spreadRadius: _pulseController.value * 5,
+                        ),
+                      ]
+                      : null,
             ),
             child: Center(
-              child: widget.loading
-                  ? SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(
-                    LuxeColors.obsidian,
-                  ),
-                ),
-              )
-                  : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (widget.icon != null) ...[
-                    Icon(
-                      widget.icon,
-                      color: enabled
-                          ? LuxeColors.obsidian
-                          : LuxeColors.textMuted,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Text(
-                    widget.label,
-                    style: GoogleFonts.cinzel(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2.0,
-                      color: enabled
-                          ? LuxeColors.obsidian
-                          : LuxeColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
+              child:
+                  widget.loading
+                      ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(
+                            LuxeColors.obsidian,
+                          ),
+                        ),
+                      )
+                      : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (widget.icon != null) ...[
+                            Icon(
+                              widget.icon,
+                              color:
+                                  enabled
+                                      ? LuxeColors.obsidian
+                                      : LuxeColors.textMuted,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                          Text(
+                            widget.label,
+                            style: GoogleFonts.cinzel(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2.0,
+                              color:
+                                  enabled
+                                      ? LuxeColors.obsidian
+                                      : LuxeColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
             ),
           ),
         );
@@ -344,7 +352,7 @@ class LuxeTextField extends StatelessWidget {
               ),
               contentPadding: const EdgeInsets.all(20),
               border: InputBorder.none,
-              counterStyle: GoogleFonts.inter(
+              counterStyle: GoogleFonts.raleway(
                 fontSize: 11,
                 color: LuxeColors.textMuted,
               ),
@@ -391,16 +399,17 @@ class LuxeSectionHeader extends StatelessWidget {
                 margin: const EdgeInsets.only(right: 6),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
-                  color: isActive
-                      ? LuxeColors.gold
-                      : LuxeColors.gold.withValues(alpha: 0.2),
+                  color:
+                      isActive
+                          ? LuxeColors.gold
+                          : LuxeColors.gold.withValues(alpha: 0.2),
                 ),
               );
             }),
             const SizedBox(width: 8),
             Text(
               'STEP $stepNumber OF $totalSteps',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.raleway(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: LuxeColors.textMuted,
@@ -519,9 +528,10 @@ class _ParticlePainter extends CustomPainter {
       final phase = random.nextDouble() * math.pi * 2;
       final opacity = (math.sin(progress * math.pi * 2 + phase) + 1) / 2 * 0.15;
 
-      final paint = Paint()
-        ..color = color.withValues(alpha: opacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      final paint =
+          Paint()
+            ..color = color.withValues(alpha: opacity)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
       canvas.drawCircle(Offset(x, y), 3 + random.nextDouble() * 3, paint);
     }

@@ -23,21 +23,23 @@ import '../services/audio_service.dart';
 import '../models/session_model.dart';
 import '../router/app_router.dart';
 import '../services/storage_service.dart';
+import '../services/achievement_service.dart';
+import '../widgets/achievement_popup.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // PALETTE
 // ═══════════════════════════════════════════════════════════════
 
 class _P {
-  static const ink     = Color(0xFF07090F);
-  static const panel   = Color(0xFF131620);
+  static const ink = Color(0xFF07090F);
+  static const panel = Color(0xFF131620);
   static const surface = Color(0xFF1A1E2C);
-  static const brass   = Color(0xFFD4A853);
+  static const brass = Color(0xFFD4A853);
   static const brassLt = Color(0xFFF0CC7A);
   static const brassDk = Color(0xFF8A6930);
-  static const cream   = Color(0xFFF5EDDB);
-  static const t2      = Color(0xFF9A8E78);
-  static const t3      = Color(0xFF564E40);
+  static const cream = Color(0xFFF5EDDB);
+  static const t2 = Color(0xFF9A8E78);
+  static const t3 = Color(0xFF564E40);
   static const success = Color(0xFF4CAF50);
   static const warning = Color(0xFFFF9800);
 }
@@ -98,7 +100,6 @@ class ArrivalScreen extends StatefulWidget {
 
 class _ArrivalScreenState extends State<ArrivalScreen>
     with TickerProviderStateMixin {
-
   // ── Animation Controllers ──────────────────────────────────
   late AnimationController _confettiCtrl;
   late AnimationController _glowCtrl;
@@ -182,6 +183,25 @@ class _ArrivalScreenState extends State<ArrivalScreen>
     if (!mounted) return;
 
     _statsCtrl.forward();
+
+    // Check for new achievements after a short delay
+    if (_isCompleted) {
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (!mounted) return;
+      _checkAchievements();
+    }
+  }
+
+  void _checkAchievements() async {
+    try {
+      final achieveSvc = AchievementService();
+      final newlyUnlocked = await achieveSvc.checkAndUnlock(_storage);
+      if (newlyUnlocked.isNotEmpty && mounted) {
+        AchievementPopup.show(context, newlyUnlocked.first);
+      }
+    } catch (e) {
+      debugPrint('Achievement check error: $e');
+    }
   }
 
   @override
@@ -268,19 +288,21 @@ class _ArrivalScreenState extends State<ArrivalScreen>
             Positioned.fill(
               child: AnimatedBuilder(
                 animation: _glowCtrl,
-                builder: (_, __) => DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(0, -0.3),
-                      radius: 1.4,
-                      colors: [
-                        _accentColor.withValues(
-                            alpha: 0.04 + _glowCtrl.value * 0.05),
-                        _P.ink,
-                      ],
+                builder:
+                    (_, __) => DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: const Alignment(0, -0.3),
+                          radius: 1.4,
+                          colors: [
+                            _accentColor.withValues(
+                              alpha: 0.04 + _glowCtrl.value * 0.05,
+                            ),
+                            _P.ink,
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
               ),
             ),
 
@@ -289,9 +311,10 @@ class _ArrivalScreenState extends State<ArrivalScreen>
               Positioned.fill(
                 child: AnimatedBuilder(
                   animation: _confettiCtrl,
-                  builder: (_, __) => CustomPaint(
-                    painter: _ConfettiPainter(t: _confettiCtrl.value),
-                  ),
+                  builder:
+                      (_, __) => CustomPaint(
+                        painter: _ConfettiPainter(t: _confettiCtrl.value),
+                      ),
                 ),
               ),
 
@@ -325,15 +348,20 @@ class _ArrivalScreenState extends State<ArrivalScreen>
                     const SizedBox(height: 24),
 
                     // Streak celebration (if applicable)
-                    if (_streak >= 3)
-                      _buildStreakCelebration(),
+                    if (_streak >= 3) _buildStreakCelebration(),
 
                     const SizedBox(height: 24),
 
                     // Note input
                     _buildNoteInput(),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
+
+                    // Share button
+                    if (_isCompleted && _lastSession != null)
+                      _buildShareButton(),
+
+                    const SizedBox(height: 24),
 
                     // Return button
                     _buildReturnButton(),
@@ -373,28 +401,28 @@ class _ArrivalScreenState extends State<ArrivalScreen>
     return AnimatedBuilder(
       animation: _contentCtrl,
       builder: (_, child) {
-        final scale = Curves.easeOutBack
-            .transform(_contentCtrl.value.clamp(0.0, 1.0));
+        final scale = Curves.easeOutBack.transform(
+          _contentCtrl.value.clamp(0.0, 1.0),
+        );
         final opacity = _contentCtrl.value.clamp(0.0, 1.0);
 
         return Opacity(
           opacity: opacity,
-          child: Transform.scale(
-            scale: scale.clamp(0.0, 1.5),
-            child: child,
-          ),
+          child: Transform.scale(scale: scale.clamp(0.0, 1.5), child: child),
         );
       },
       child: Container(
-        width: 100, height: 100,
+        width: 100,
+        height: 100,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: _isCompleted
-                ? [_P.brassLt, _P.brass, _P.brassDk]
-                : [_P.warning, _P.warning.withValues(alpha: 0.7)],
+            colors:
+                _isCompleted
+                    ? [_P.brassLt, _P.brass, _P.brassDk]
+                    : [_P.warning, _P.warning.withValues(alpha: 0.7)],
           ),
           boxShadow: [
             BoxShadow(
@@ -419,23 +447,21 @@ class _ArrivalScreenState extends State<ArrivalScreen>
     return AnimatedBuilder(
       animation: _contentCtrl,
       builder: (_, child) {
-        final opacity = Curves.easeOut
-            .transform(_contentCtrl.value.clamp(0.0, 1.0));
+        final opacity = Curves.easeOut.transform(
+          _contentCtrl.value.clamp(0.0, 1.0),
+        );
         final slide = (1 - _contentCtrl.value) * 20;
 
         return Opacity(
           opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, slide),
-            child: child,
-          ),
+          child: Transform.translate(offset: Offset(0, slide), child: child),
         );
       },
       child: Column(
         children: [
           Text(
             _title,
-            style: GoogleFonts.cormorant(
+            style: GoogleFonts.cormorantGaramond(
               fontSize: 28,
               fontWeight: FontWeight.w700,
               color: _P.cream,
@@ -449,7 +475,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
               children: [
                 Text(
                   _lastSession!.routeName,
-                  style: GoogleFonts.cormorant(
+                  style: GoogleFonts.cormorantGaramond(
                     fontSize: 15,
                     fontStyle: FontStyle.italic,
                     color: _P.t2,
@@ -469,8 +495,9 @@ class _ArrivalScreenState extends State<ArrivalScreen>
     return AnimatedBuilder(
       animation: _contentCtrl,
       builder: (_, child) {
-        final opacity = Curves.easeOut
-            .transform((_contentCtrl.value - 0.3).clamp(0.0, 1.0) / 0.7);
+        final opacity = Curves.easeOut.transform(
+          (_contentCtrl.value - 0.3).clamp(0.0, 1.0) / 0.7,
+        );
 
         return Opacity(opacity: opacity, child: child);
       },
@@ -479,8 +506,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
         decoration: BoxDecoration(
           color: _P.panel,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: _P.brass.withValues(alpha: 0.2)),
+          border: Border.all(color: _P.brass.withValues(alpha: 0.2)),
         ),
         child: Column(
           children: [
@@ -490,9 +516,11 @@ class _ArrivalScreenState extends State<ArrivalScreen>
               children: [
                 _decoLine(),
                 const SizedBox(width: 12),
-                Icon(Icons.format_quote_rounded,
-                    color: _P.brass.withValues(alpha: 0.4),
-                    size: 20),
+                Icon(
+                  Icons.format_quote_rounded,
+                  color: _P.brass.withValues(alpha: 0.4),
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 _decoLine(),
               ],
@@ -504,7 +532,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
             Text(
               _arrivalMessage,
               textAlign: TextAlign.center,
-              style: GoogleFonts.cormorant(
+              style: GoogleFonts.cormorantGaramond(
                 fontSize: 18,
                 fontStyle: FontStyle.italic,
                 color: _P.cream,
@@ -517,7 +545,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
             // Conductor signature
             Text(
               '— The Conductor',
-              style: GoogleFonts.cormorant(
+              style: GoogleFonts.cormorantGaramond(
                 fontSize: 13,
                 color: _P.t3,
                 letterSpacing: 1,
@@ -531,7 +559,8 @@ class _ArrivalScreenState extends State<ArrivalScreen>
 
   Widget _decoLine() {
     return Container(
-      width: 30, height: 1,
+      width: 30,
+      height: 1,
       color: _P.brass.withValues(alpha: 0.3),
     );
   }
@@ -542,16 +571,14 @@ class _ArrivalScreenState extends State<ArrivalScreen>
     return AnimatedBuilder(
       animation: _statsCtrl,
       builder: (_, child) {
-        final opacity = Curves.easeOut
-            .transform(_statsCtrl.value.clamp(0.0, 1.0));
+        final opacity = Curves.easeOut.transform(
+          _statsCtrl.value.clamp(0.0, 1.0),
+        );
         final slide = (1 - _statsCtrl.value) * 30;
 
         return Opacity(
           opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, slide),
-            child: child,
-          ),
+          child: Transform.translate(offset: Offset(0, slide), child: child),
         );
       },
       child: Container(
@@ -559,8 +586,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
         decoration: BoxDecoration(
           color: _P.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-              color: _P.brass.withValues(alpha: 0.12)),
+          border: Border.all(color: _P.brass.withValues(alpha: 0.12)),
         ),
         child: Column(
           children: [
@@ -568,22 +594,28 @@ class _ArrivalScreenState extends State<ArrivalScreen>
             Row(
               children: [
                 Container(
-                  width: 32, height: 32,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _P.brass.withValues(alpha: 0.15),
                   ),
-                  child: Icon(Icons.analytics_outlined,
-                      color: _P.brass, size: 16),
+                  child: Icon(
+                    Icons.analytics_outlined,
+                    color: _P.brass,
+                    size: 16,
+                  ),
                 ),
                 const SizedBox(width: 12),
-                Text('SESSION STATS',
-                    style: GoogleFonts.dmMono(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _P.brass,
-                      letterSpacing: 2,
-                    )),
+                Text(
+                  'SESSION STATS',
+                  style: GoogleFonts.spaceMono(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _P.brass,
+                    letterSpacing: 2,
+                  ),
+                ),
               ],
             ),
 
@@ -655,8 +687,9 @@ class _ArrivalScreenState extends State<ArrivalScreen>
     return AnimatedBuilder(
       animation: _statsCtrl,
       builder: (_, child) {
-        final opacity = Curves.easeOut
-            .transform((_statsCtrl.value - 0.5).clamp(0.0, 1.0) * 2);
+        final opacity = Curves.easeOut.transform(
+          (_statsCtrl.value - 0.5).clamp(0.0, 1.0) * 2,
+        );
 
         return Opacity(opacity: opacity, child: child);
       },
@@ -671,13 +704,15 @@ class _ArrivalScreenState extends State<ArrivalScreen>
           ),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color: const Color(0xFFFF6030).withValues(alpha: 0.3)),
+            color: const Color(0xFFFF6030).withValues(alpha: 0.3),
+          ),
         ),
         child: Row(
           children: [
             // Fire icon with glow
             Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFFFF6030).withValues(alpha: 0.2),
@@ -688,8 +723,11 @@ class _ArrivalScreenState extends State<ArrivalScreen>
                   ),
                 ],
               ),
-              child: const Icon(Icons.local_fire_department_rounded,
-                  color: Color(0xFFFF6030), size: 22),
+              child: const Icon(
+                Icons.local_fire_department_rounded,
+                color: Color(0xFFFF6030),
+                size: 22,
+              ),
             ),
 
             const SizedBox(width: 14),
@@ -701,7 +739,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
                 children: [
                   Text(
                     _streak >= 7 ? '🔥 WEEK STREAK!' : '🔥 STREAK ACTIVE',
-                    style: GoogleFonts.dmMono(
+                    style: GoogleFonts.spaceMono(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFFFF6030),
@@ -711,7 +749,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
                   const SizedBox(height: 2),
                   Text(
                     '$_streak consecutive days of focus',
-                    style: GoogleFonts.cormorant(
+                    style: GoogleFonts.cormorantGaramond(
                       fontSize: 14,
                       color: _P.cream,
                     ),
@@ -731,8 +769,9 @@ class _ArrivalScreenState extends State<ArrivalScreen>
     return AnimatedBuilder(
       animation: _statsCtrl,
       builder: (_, child) {
-        final opacity = Curves.easeOut
-            .transform((_statsCtrl.value - 0.6).clamp(0.0, 1.0) / 0.4);
+        final opacity = Curves.easeOut.transform(
+          (_statsCtrl.value - 0.6).clamp(0.0, 1.0) / 0.4,
+        );
 
         return Opacity(opacity: opacity, child: child);
       },
@@ -741,8 +780,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
         decoration: BoxDecoration(
           color: _P.panel,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-              color: _P.brass.withValues(alpha: 0.12)),
+          border: Border.all(color: _P.brass.withValues(alpha: 0.12)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -750,30 +788,39 @@ class _ArrivalScreenState extends State<ArrivalScreen>
             // Header
             Row(
               children: [
-                Icon(Icons.edit_note_rounded,
-                    color: _P.brass.withValues(alpha: 0.6),
-                    size: 20),
+                Icon(
+                  Icons.edit_note_rounded,
+                  color: _P.brass.withValues(alpha: 0.6),
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
-                Text('REFLECTION',
-                    style: GoogleFonts.dmMono(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _P.t2,
-                      letterSpacing: 2,
-                    )),
+                Text(
+                  'REFLECTION',
+                  style: GoogleFonts.spaceMono(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _P.t2,
+                    letterSpacing: 2,
+                  ),
+                ),
                 const Spacer(),
                 if (_noteSaved)
                   Row(
                     children: [
-                      Icon(Icons.check_circle_rounded,
-                          color: _P.success, size: 14),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: _P.success,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
-                      Text('SAVED',
-                          style: GoogleFonts.dmMono(
-                            fontSize: 9,
-                            color: _P.success,
-                            letterSpacing: 1,
-                          )),
+                      Text(
+                        'SAVED',
+                        style: GoogleFonts.spaceMono(
+                          fontSize: 9,
+                          color: _P.success,
+                          letterSpacing: 1,
+                        ),
+                      ),
                     ],
                   ),
               ],
@@ -787,7 +834,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
               focusNode: _noteFocus,
               maxLines: 3,
               maxLength: 200,
-              style: GoogleFonts.cormorant(
+              style: GoogleFonts.cormorantGaramond(
                 fontSize: 16,
                 color: _P.cream,
                 fontStyle: FontStyle.italic,
@@ -795,16 +842,13 @@ class _ArrivalScreenState extends State<ArrivalScreen>
               cursorColor: _P.brass,
               decoration: InputDecoration(
                 hintText: 'What did you accomplish?',
-                hintStyle: GoogleFonts.cormorant(
+                hintStyle: GoogleFonts.cormorantGaramond(
                   fontSize: 16,
                   color: _P.t3,
                   fontStyle: FontStyle.italic,
                 ),
                 border: InputBorder.none,
-                counterStyle: GoogleFonts.dmMono(
-                  fontSize: 9,
-                  color: _P.t3,
-                ),
+                counterStyle: GoogleFonts.spaceMono(fontSize: 9, color: _P.t3),
               ),
               onChanged: (_) {
                 if (_noteSaved) {
@@ -823,17 +867,18 @@ class _ArrivalScreenState extends State<ArrivalScreen>
                 decoration: BoxDecoration(
                   color: _P.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      color: _P.brass.withValues(alpha: 0.2)),
+                  border: Border.all(color: _P.brass.withValues(alpha: 0.2)),
                 ),
                 child: Center(
-                  child: Text('SAVE NOTE',
-                      style: GoogleFonts.dmMono(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _P.brass,
-                        letterSpacing: 2,
-                      )),
+                  child: Text(
+                    'SAVE NOTE',
+                    style: GoogleFonts.spaceMono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: _P.brass,
+                      letterSpacing: 2,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -854,14 +899,70 @@ class _ArrivalScreenState extends State<ArrivalScreen>
     _noteFocus.unfocus();
   }
 
+  // ── Share Button ───────────────────────────────────────────
+
+  Widget _buildShareButton() {
+    return AnimatedBuilder(
+      animation: _statsCtrl,
+      builder: (_, child) {
+        final opacity = Curves.easeOut.transform(
+          (_statsCtrl.value - 0.7).clamp(0.0, 1.0) / 0.3,
+        );
+        return Opacity(opacity: opacity, child: child);
+      },
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          context.push(
+            AppRouter.shareCard,
+            extra: {
+              'routeName': _lastSession!.routeName,
+              'routeEmoji': '🚂',
+              'durationMinutes': _lastSession!.durationMinutes,
+              'sessionDate': _lastSession!.startTime,
+              'mood': _lastSession!.mood,
+              'goal': _lastSession!.goal,
+            },
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          height: 52,
+          decoration: BoxDecoration(
+            color: _P.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _P.brass.withValues(alpha: 0.25)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.share_rounded, color: _P.brass, size: 18),
+              const SizedBox(width: 10),
+              Text(
+                'SHARE JOURNEY',
+                style: GoogleFonts.spaceMono(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: _P.brass,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Return Button ──────────────────────────────────────────
 
   Widget _buildReturnButton() {
     return AnimatedBuilder(
       animation: _statsCtrl,
       builder: (_, child) {
-        final opacity = Curves.easeOut
-            .transform((_statsCtrl.value - 0.8).clamp(0.0, 1.0) / 0.2);
+        final opacity = Curves.easeOut.transform(
+          (_statsCtrl.value - 0.8).clamp(0.0, 1.0) / 0.2,
+        );
 
         return Opacity(opacity: opacity, child: child);
       },
@@ -891,13 +992,15 @@ class _ArrivalScreenState extends State<ArrivalScreen>
             children: [
               const Icon(Icons.home_rounded, color: _P.ink, size: 22),
               const SizedBox(width: 12),
-              Text('RETURN TO STATION',
-                  style: GoogleFonts.dmMono(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: _P.ink,
-                    letterSpacing: 2,
-                  )),
+              Text(
+                'RETURN TO STATION',
+                style: GoogleFonts.spaceMono(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _P.ink,
+                  letterSpacing: 2,
+                ),
+              ),
             ],
           ),
         ),
@@ -935,10 +1038,7 @@ class _StatItem extends StatelessWidget {
         final t = ((ctrl.value - delay) / (1.0 - delay)).clamp(0.0, 1.0);
         final scale = Curves.easeOutBack.transform(t).clamp(0.0, 1.2);
 
-        return Transform.scale(
-          scale: scale,
-          child: child,
-        );
+        return Transform.scale(scale: scale, child: child);
       },
       child: Column(
         children: [
@@ -946,7 +1046,7 @@ class _StatItem extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.cormorant(
+            style: GoogleFonts.cormorantGaramond(
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: _P.cream,
@@ -955,7 +1055,7 @@ class _StatItem extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: GoogleFonts.dmMono(
+            style: GoogleFonts.spaceMono(
               fontSize: 8,
               color: _P.t3,
               letterSpacing: 1.5,
@@ -982,12 +1082,16 @@ class _ConfettiPainter extends CustomPainter {
     for (final piece in _kConfetti) {
       // Calculate position
       final progress = (t * piece.speed * 1.5).clamp(0.0, 1.0);
-      final x = piece.x * size.width +
+      final x =
+          piece.x * size.width +
           math.sin(t * math.pi * 4 + piece.rotation) * 30;
       final y = -20 + progress * (size.height + 100);
 
       // Fade out at the end
-      final alpha = (1 - (progress - 0.7).clamp(0.0, 1.0) / 0.3).clamp(0.0, 1.0);
+      final alpha = (1 - (progress - 0.7).clamp(0.0, 1.0) / 0.3).clamp(
+        0.0,
+        1.0,
+      );
       if (alpha <= 0) continue;
 
       final rotation = piece.rotation + t * piece.rotationSpeed * math.pi;
@@ -996,8 +1100,7 @@ class _ConfettiPainter extends CustomPainter {
       canvas.translate(x, y);
       canvas.rotate(rotation);
 
-      final paint = Paint()
-        ..color = piece.color.withValues(alpha: alpha * 0.8);
+      final paint = Paint()..color = piece.color.withValues(alpha: alpha * 0.8);
 
       switch (piece.shape) {
         case 0: // Circle
@@ -1006,18 +1109,20 @@ class _ConfettiPainter extends CustomPainter {
         case 1: // Square
           canvas.drawRect(
             Rect.fromCenter(
-                center: Offset.zero,
-                width: piece.size,
-                height: piece.size),
+              center: Offset.zero,
+              width: piece.size,
+              height: piece.size,
+            ),
             paint,
           );
           break;
         case 2: // Rectangle
           canvas.drawRect(
             Rect.fromCenter(
-                center: Offset.zero,
-                width: piece.size,
-                height: piece.size * 0.4),
+              center: Offset.zero,
+              width: piece.size,
+              height: piece.size * 0.4,
+            ),
             paint,
           );
           break;

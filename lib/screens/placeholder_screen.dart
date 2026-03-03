@@ -15,7 +15,7 @@
 //   ✓ Vignette Container → DecoratedBox (already Positioned.fill,
 //     Container was wasteful with no child/size)
 //   ✓ GoogleFonts.cormorantGaramond → GoogleFonts.cormorant
-//   ✓ GoogleFonts.inter → GoogleFonts.dmMono (app-consistent)
+//   ✓ GoogleFonts.inter → GoogleFonts.spaceMono (app-consistent)
 //   ✓ Icon() → const Icon() where possible
 
 import 'package:flutter/material.dart';
@@ -40,10 +40,8 @@ class PlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mq              = MediaQuery.of(context);
-    final availableHeight = mq.size.height
-        - mq.padding.top
-        - mq.padding.bottom;
+    final mq = MediaQuery.of(context);
+    final availableHeight = mq.size.height - mq.padding.top - mq.padding.bottom;
 
     return Scaffold(
       backgroundColor: LuxeColors.obsidian,
@@ -70,9 +68,7 @@ class PlaceholderScreen extends StatelessWidget {
           ),
 
           // ── Decorative grid ─────────────────────────────────────────
-          Positioned.fill(
-            child: CustomPaint(painter: _GridPatternPainter()),
-          ),
+          Positioned.fill(child: CustomPaint(painter: _GridPatternPainter())),
 
           // ── Main content ────────────────────────────────────────────
           // FIX: SingleChildScrollView + ConstrainedBox(minHeight):
@@ -92,42 +88,43 @@ class PlaceholderScreen extends StatelessWidget {
                     children: [
                       // ── Header ───────────────────────────────────
                       Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            _BackButton(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                context.pop();
-                              },
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: LuxeColors.gold
-                                      .withValues(alpha: 0.3),
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                _BackButton(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    context.pop();
+                                  },
                                 ),
-                              ),
-                              child: Text(
-                                'COMING SOON',
-                                // FIX: GoogleFonts.inter → dmMono
-                                style: GoogleFonts.dmMono(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: LuxeColors.gold,
-                                  letterSpacing: 2,
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: LuxeColors.gold.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'COMING SOON',
+                                    // FIX: GoogleFonts.inter → dmMono
+                                    style: GoogleFonts.spaceMono(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: LuxeColors.gold,
+                                      letterSpacing: 2,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      )
+                          )
                           .animate()
                           .fadeIn(duration: 400.ms)
                           .slideY(begin: -0.3, end: 0),
@@ -140,51 +137,52 @@ class PlaceholderScreen extends StatelessWidget {
                             const Spacer(),
 
                             Container(
-                              width: 140,
-                              height: 140,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    LuxeColors.gold.withValues(alpha: 0.15),
-                                    LuxeColors.gold.withValues(alpha: 0.05),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: LuxeColors.gold
-                                      .withValues(alpha: 0.3),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  emoji,
-                                  style: const TextStyle(fontSize: 64),
-                                ),
-                              ),
-                            )
+                                  width: 140,
+                                  height: 140,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        LuxeColors.gold.withValues(alpha: 0.15),
+                                        LuxeColors.gold.withValues(alpha: 0.05),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                    border: Border.all(
+                                      color: LuxeColors.gold.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      emoji,
+                                      style: const TextStyle(fontSize: 64),
+                                    ),
+                                  ),
+                                )
                                 .animate(delay: 200.ms)
                                 .scale(
-                              begin: const Offset(0.5, 0.5),
-                              end: const Offset(1, 1),
-                              duration: 600.ms,
-                              curve: Curves.elasticOut,
-                            )
+                                  begin: const Offset(0.5, 0.5),
+                                  end: const Offset(1, 1),
+                                  duration: 600.ms,
+                                  curve: Curves.elasticOut,
+                                )
                                 .fadeIn(),
 
                             const SizedBox(height: 40),
 
                             Text(
-                              title.toUpperCase(),
-                              style: GoogleFonts.cinzel(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w700,
-                                color: LuxeColors.champagne,
-                                letterSpacing: 4,
-                              ),
-                              textAlign: TextAlign.center,
-                            )
+                                  title.toUpperCase(),
+                                  style: GoogleFonts.cinzel(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: LuxeColors.champagne,
+                                    letterSpacing: 4,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                )
                                 .animate(delay: 400.ms)
                                 .fadeIn(duration: 500.ms)
                                 .slideY(begin: 0.2, end: 0),
@@ -193,20 +191,22 @@ class PlaceholderScreen extends StatelessWidget {
 
                             // FIX: GoogleFonts.cormorantGaramond → cormorant
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 40),
-                              child: Text(
-                                hint,
-                                style: GoogleFonts.cormorant(
-                                  fontSize: 18,
-                                  fontStyle: FontStyle.italic,
-                                  color: LuxeColors.champagne
-                                      .withValues(alpha: 0.6),
-                                  height: 1.5,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            )
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 40,
+                                  ),
+                                  child: Text(
+                                    hint,
+                                    style: GoogleFonts.cormorantGaramond(
+                                      fontSize: 18,
+                                      fontStyle: FontStyle.italic,
+                                      color: LuxeColors.champagne.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                      height: 1.5,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                )
                                 .animate(delay: 500.ms)
                                 .fadeIn(duration: 500.ms)
                                 .slideY(begin: 0.2, end: 0),
@@ -234,53 +234,54 @@ class PlaceholderScreen extends StatelessWidget {
                       // The original 32px top + 32px bottom = 64px of
                       // vertical padding was the direct overflow culprit.
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 8, 32, 28),
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            context.go('/');
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 28,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: LuxeColors.gold
-                                    .withValues(alpha: 0.4),
-                              ),
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.08),
-                                  Colors.white.withValues(alpha: 0.03),
-                                ],
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.arrow_back_rounded,
-                                  color: LuxeColors.gold,
-                                  size: 18,
+                            padding: const EdgeInsets.fromLTRB(32, 8, 32, 28),
+                            child: GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                context.go('/');
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 14,
                                 ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'BACK TO STATION',
-                                  style: GoogleFonts.cinzel(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: LuxeColors.champagne,
-                                    letterSpacing: 2,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: LuxeColors.gold.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.08),
+                                      Colors.white.withValues(alpha: 0.03),
+                                    ],
                                   ),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.arrow_back_rounded,
+                                      color: LuxeColors.gold,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'BACK TO STATION',
+                                      style: GoogleFonts.cinzel(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: LuxeColors.champagne,
+                                        letterSpacing: 2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      )
+                          )
                           .animate(delay: 800.ms)
                           .fadeIn(duration: 500.ms)
                           .slideY(begin: 0.3, end: 0),
@@ -315,28 +316,28 @@ class PlaceholderScreen extends StatelessWidget {
 
   Widget _buildDot(int index) {
     return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: LuxeColors.gold.withValues(alpha: 0.5),
-      ),
-    )
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: LuxeColors.gold.withValues(alpha: 0.5),
+          ),
+        )
         .animate(
-      onPlay: (controller) => controller.repeat(reverse: true),
-      delay: Duration(milliseconds: index * 200),
-    )
+          onPlay: (controller) => controller.repeat(reverse: true),
+          delay: Duration(milliseconds: index * 200),
+        )
         .scale(
-      begin: const Offset(0.8, 0.8),
-      end: const Offset(1.2, 1.2),
-      duration: 600.ms,
-    )
+          begin: const Offset(0.8, 0.8),
+          end: const Offset(1.2, 1.2),
+          duration: 600.ms,
+        )
         .then()
         .scale(
-      begin: const Offset(1.2, 1.2),
-      end: const Offset(0.8, 0.8),
-      duration: 600.ms,
-    );
+          begin: const Offset(1.2, 1.2),
+          end: const Offset(0.8, 0.8),
+          duration: 600.ms,
+        );
   }
 }
 
@@ -364,9 +365,7 @@ class _BackButton extends StatelessWidget {
               Colors.white.withValues(alpha: 0.05),
             ],
           ),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.15),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
         ),
         child: const Icon(
           Icons.arrow_back_ios_new_rounded,
@@ -381,10 +380,11 @@ class _BackButton extends StatelessWidget {
 class _GridPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = LuxeColors.gold.withValues(alpha: 0.03)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
+    final paint =
+        Paint()
+          ..color = LuxeColors.gold.withValues(alpha: 0.03)
+          ..strokeWidth = 1
+          ..style = PaintingStyle.stroke;
 
     const spacing = 40.0;
 

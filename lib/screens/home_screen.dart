@@ -21,10 +21,21 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../models/session_model.dart';
+import '../models/route_model.dart';
 import '../router/app_router.dart';
 import '../services/audio_service.dart';
+import '../services/auth_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
+import '../widgets/route_unlock_dialog.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/animated_counter.dart';
+import '../widgets/station_widget.dart';
+import '../widgets/daily_challenge_card.dart';
+import '../models/daily_challenge.dart';
+import '../widgets/streak_calendar.dart';
+import '../widgets/level_up_overlay.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // PALETTE
@@ -117,50 +128,34 @@ enum SceneTheme {
   List<Color> get sky {
     switch (this) {
       case aurora:
-        return const [
-          Color(0xFF060B14),
-          Color(0xFF0B1828),
-          Color(0xFF132040)
-        ];
+        return const [Color(0xFF060B14), Color(0xFF0B1828), Color(0xFF132040)];
       case sunrise:
         return const [
           Color(0xFF180808),
           Color(0xFF501820),
           Color(0xFFAA3820),
-          Color(0xFFE07040)
+          Color(0xFFE07040),
         ];
       case morning:
-        return const [
-          Color(0xFF1A3050),
-          Color(0xFF3A6890),
-          Color(0xFF70A8D0)
-        ];
+        return const [Color(0xFF1A3050), Color(0xFF3A6890), Color(0xFF70A8D0)];
       case afternoon:
-        return const [
-          Color(0xFF182840),
-          Color(0xFF2860A0),
-          Color(0xFF4888C8)
-        ];
+        return const [Color(0xFF182840), Color(0xFF2860A0), Color(0xFF4888C8)];
       case sunset:
         return const [
           Color(0xFF180808),
           Color(0xFF601810),
           Color(0xFFD83820),
-          Color(0xFFE07040)
+          Color(0xFFE07040),
         ];
       case twilight:
         return const [
           Color(0xFF080618),
           Color(0xFF201040),
           Color(0xFF482870),
-          Color(0xFF603090)
+          Color(0xFF603090),
         ];
       case midnight:
-        return const [
-          Color(0xFF040408),
-          Color(0xFF080818),
-          Color(0xFF0C1028)
-        ];
+        return const [Color(0xFF040408), Color(0xFF080818), Color(0xFF0C1028)];
     }
   }
 
@@ -174,6 +169,56 @@ enum SceneTheme {
   bool get lanterns => this == midnight || this == SceneTheme.aurora;
   bool get shooters =>
       this == midnight || this == SceneTheme.aurora || this == twilight;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FOCUS MOOD — Reactive scenery based on user's focus patterns
+// ═══════════════════════════════════════════════════════════════
+
+enum FocusMood {
+  onFire,      // streak >= 3 AND focused today
+  productive,  // focused today (1+ sessions)
+  warmingUp,   // has sessions but none today
+  idle;        // no sessions at all
+
+  String get label {
+    switch (this) {
+      case FocusMood.onFire:
+        return '🔥 On Fire — Keep the streak alive!';
+      case FocusMood.productive:
+        return '✨ Productive day — Great work!';
+      case FocusMood.warmingUp:
+        return '🌤️ Warming up — Start a session?';
+      case FocusMood.idle:
+        return '🌧️ Idle — Your train awaits...';
+    }
+  }
+
+  Color get glowColor {
+    switch (this) {
+      case FocusMood.onFire:
+        return const Color(0xFFFFD700); // golden
+      case FocusMood.productive:
+        return const Color(0xFF4CAF50); // green
+      case FocusMood.warmingUp:
+        return const Color(0xFFFF9800); // amber
+      case FocusMood.idle:
+        return const Color(0xFF5A6A7A); // grey-blue
+    }
+  }
+
+  double get glowIntensity {
+    switch (this) {
+      case FocusMood.onFire: return 0.25;
+      case FocusMood.productive: return 0.15;
+      case FocusMood.warmingUp: return 0.08;
+      case FocusMood.idle: return 0.04;
+    }
+  }
+
+  bool get showRain => this == FocusMood.idle;
+  bool get showGoldenGlow => this == FocusMood.onFire;
+  bool get showSparkles => this == FocusMood.productive || this == FocusMood.onFire;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -203,6 +248,83 @@ class _HomeScreenState extends State<HomeScreen>
   late AnimationController _pulse; // 2 s logo pulse
 
   late SceneTheme _scene;
+  int _todayMinutes = 0;
+  int _bricks = 0;
+  int _stationLevel = 0;
+  int _bricksForNext = 5;
+  DailyChallenge _dailyChallenge = DailyChallenge.generateForToday();
+  bool _challengeCompleted = false;
+  double _challengeProgress = 0.0;
+  Map<String, int> _focusData = {};
+  bool _showLevelUp = false;
+  int _prevStationLevel = -1;
+
+  FocusMood get _focusMood {
+    final today = DateTime.now();
+    final hasSessionToday = _sessions.any(
+      (s) => s.startTime.year == today.year &&
+             s.startTime.month == today.month &&
+             s.startTime.day == today.day,
+    );
+    if (hasSessionToday && _streak >= 3) return FocusMood.onFire;
+    if (hasSessionToday) return FocusMood.productive;
+    if (_totalHours > 0) return FocusMood.warmingUp;
+    return FocusMood.idle;
+  }
+
+  double _calcChallengeProgress() {
+    if (_challengeCompleted) return 1.0;
+    final c = _dailyChallenge;
+    switch (c.type) {
+      case ChallengeType.focusDuration:
+      case ChallengeType.marathon:
+        final mins = _storage.getTodayMinutes();
+        final p = mins / c.targetValue;
+        if (p >= 1.0) _autoCompleteChallenge();
+        return p.clamp(0.0, 1.0);
+      case ChallengeType.sessionCount:
+        final count = _storage.getTodaySessionCount();
+        final p = count / c.targetValue;
+        if (p >= 1.0) _autoCompleteChallenge();
+        return p.clamp(0.0, 1.0);
+      case ChallengeType.specificRoute:
+        final route = RouteModel.fromId(c.routeId ?? '');
+        final done = route != null && _storage.hasRouteToday(route.name);
+        if (done) _autoCompleteChallenge();
+        return done ? 1.0 : 0.0;
+      case ChallengeType.earlyBird:
+        final done = _storage.hasSessionBeforeHour(c.targetValue);
+        if (done) _autoCompleteChallenge();
+        return done ? 1.0 : 0.0;
+      case ChallengeType.nightOwl:
+        final done = _storage.hasSessionAfterHour(c.targetValue);
+        if (done) _autoCompleteChallenge();
+        return done ? 1.0 : 0.0;
+      case ChallengeType.streakKeep:
+        final done = _streak >= c.targetValue;
+        if (done) _autoCompleteChallenge();
+        return done ? 1.0 : 0.0;
+    }
+  }
+
+  void _autoCompleteChallenge() {
+    if (_challengeCompleted) return;
+    _storage.completeDailyChallenge(_dailyChallenge.id, _dailyChallenge.brickReward);
+    _challengeCompleted = true;
+    // Refresh brick count
+    _bricks = _storage.getBricks();
+    _stationLevel = _storage.getStationLevel();
+    _bricksForNext = _storage.bricksForNextLevel();
+  }
+
+  String get _greeting {
+    final user = AuthService.instance.currentUser;
+    if (user != null && user.displayName != null && user.displayName!.isNotEmpty) {
+      final firstName = user.displayName!.split(' ').first;
+      return 'Hi, $firstName 👋';
+    }
+    return 'Welcome, Traveller';
+  }
 
   @override
   void initState() {
@@ -211,22 +333,29 @@ class _HomeScreenState extends State<HomeScreen>
     _scene = SceneTheme.now();
 
     _breath = AnimationController(
-        vsync: this, duration: const Duration(seconds: 8))
-      ..repeat(reverse: true);
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat(reverse: true);
     _train = AnimationController(
-        vsync: this, duration: const Duration(seconds: 14))
-      ..repeat();
+      vsync: this,
+      duration: const Duration(seconds: 14),
+    )..repeat();
     _stars = AnimationController(
-        vsync: this, duration: const Duration(seconds: 30))
-      ..repeat();
+      vsync: this,
+      duration: const Duration(seconds: 30),
+    )..repeat();
     _aurora = AnimationController(
-        vsync: this, duration: const Duration(seconds: 6))
-      ..repeat();
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
     _counter = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1200));
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _pulse = AnimationController(
-        vsync: this, duration: const Duration(seconds: 2))
-      ..repeat(reverse: true);
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
 
     _load();
   }
@@ -256,6 +385,20 @@ class _HomeScreenState extends State<HomeScreen>
         _totalHours = _storage.getTotalHours();
         _sessions = _storage.getAllSessions().take(5).toList();
         _scene = SceneTheme.now();
+        _bricks = _storage.getBricks();
+        _stationLevel = _storage.getStationLevel();
+        _bricksForNext = _storage.bricksForNextLevel();
+        _dailyChallenge = DailyChallenge.generateForToday();
+        _challengeCompleted = _storage.isChallengeCompleted(_dailyChallenge.id);
+        _challengeProgress = _calcChallengeProgress();
+        _focusData = _storage.getFocusDataLast35Days();
+
+        // Detect level-up
+        final newLevel = _stationLevel;
+        if (_prevStationLevel >= 0 && newLevel > _prevStationLevel) {
+          _showLevelUp = true;
+        }
+        _prevStationLevel = newLevel;
       });
       _counter.forward(from: 0);
 
@@ -263,10 +406,11 @@ class _HomeScreenState extends State<HomeScreen>
       if (_streak > 0) {
         // Check if user has a session TODAY
         final today = DateTime.now();
-        final hasSessionToday = _sessions.any((s) =>
-          s.startTime.year == today.year &&
-          s.startTime.month == today.month &&
-          s.startTime.day == today.day
+        final hasSessionToday = _sessions.any(
+          (s) =>
+              s.startTime.year == today.year &&
+              s.startTime.month == today.month &&
+              s.startTime.day == today.day,
         );
 
         if (!hasSessionToday) {
@@ -279,6 +423,41 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } catch (e) {
       debugPrint('⚠️ Home data load error: $e');
+    }
+
+    // Check for newly unlocked routes
+    _checkRouteUnlocks();
+  }
+
+  void _checkRouteUnlocks() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final seenKey = 'seen_unlock_hours';
+      final lastSeen = prefs.getDouble(seenKey) ?? 0.0;
+
+      // Find routes that are now unlocked but weren't before
+      final newUnlocks =
+          RouteModel.allRoutes.where((r) {
+            try {
+              return r.unlockHoursRequired > 0 &&
+                  r.isUnlocked(_totalHours) &&
+                  !r.isUnlocked(lastSeen);
+            } catch (_) {
+              return false;
+            }
+          }).toList();
+
+      await prefs.setDouble(seenKey, _totalHours);
+
+      if (newUnlocks.isNotEmpty && mounted) {
+        // Small delay for screen to settle
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (mounted) {
+          RouteUnlockDialog.show(context, newUnlocks.first);
+        }
+      }
+    } catch (e) {
+      debugPrint('Route unlock check error: $e');
     }
   }
 
@@ -294,19 +473,21 @@ class _HomeScreenState extends State<HomeScreen>
             Positioned.fill(
               child: AnimatedBuilder(
                 animation: _breath,
-                builder: (_, __) => Container(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(0, -0.4),
-                      radius: 1.2,
-                      colors: [
-                        _scene.accent
-                            .withValues(alpha: 0.04 + _breath.value * 0.03),
-                        _P.ink,
-                      ],
+                builder:
+                    (_, __) => Container(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: const Alignment(0, -0.4),
+                          radius: 1.2,
+                          colors: [
+                            _scene.accent.withValues(
+                              alpha: 0.04 + _breath.value * 0.03,
+                            ),
+                            _P.ink,
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
               ),
             ),
 
@@ -324,46 +505,89 @@ class _HomeScreenState extends State<HomeScreen>
 
                           // DIORAMA WINDOW
                           _SceneDiorama(
-                            scene: _scene,
-                            breath: _breath,
-                            train: _train,
-                            stars: _stars,
-                            aurora: _aurora,
-                          )
+                                scene: _scene,
+                                breath: _breath,
+                                train: _train,
+                                stars: _stars,
+                                aurora: _aurora,
+                              )
                               .animate(delay: 150.ms)
                               .fadeIn(duration: 800.ms)
                               .scale(
-                              begin: const Offset(0.94, 0.94),
-                              curve: Curves.easeOutCubic),
+                                begin: const Offset(0.94, 0.94),
+                                curve: Curves.easeOutCubic,
+                              ),
 
                           const SizedBox(height: 28),
 
                           // STATS DEPARTURE BOARD
                           _DepartureBoardStats(
-                            streak: _streak,
-                            hours: _totalHours,
-                            counter: _counter,
-                            accent: _scene.accent,
-                          )
+                                streak: _streak,
+                                hours: _totalHours,
+                                counter: _counter,
+                                accent: _scene.accent,
+                              )
                               .animate(delay: 400.ms)
                               .fadeIn(duration: 600.ms)
                               .slideY(begin: 0.08, end: 0),
 
                           const SizedBox(height: 24),
 
+                          // STATION BUILDING
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: StationWidget(
+                              bricks: _bricks,
+                              level: _stationLevel,
+                              bricksForNext: _bricksForNext,
+                            ),
+                          )
+                              .animate(delay: 500.ms)
+                              .fadeIn(duration: 600.ms)
+                              .slideY(begin: 0.08, end: 0),
+
+                          const SizedBox(height: 24),
+
+                          // DAILY CHALLENGE
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: DailyChallengeCard(
+                              challenge: _dailyChallenge,
+                              isCompleted: _challengeCompleted,
+                              progress: _challengeProgress,
+                            ),
+                          )
+                              .animate(delay: 520.ms)
+                              .fadeIn(duration: 600.ms)
+                              .slideY(begin: 0.08, end: 0),
+
+                          const SizedBox(height: 14),
+
+                          // STREAK CALENDAR
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: StreakCalendar(focusData: _focusData),
+                          )
+                              .animate(delay: 540.ms)
+                              .fadeIn(duration: 600.ms)
+                              .slideY(begin: 0.08, end: 0),
+
+                          const SizedBox(height: 24),
+
                           // SECTION DIVIDER
-                          _ArtDecoDivider(accent: _scene.accent)
-                              .animate(delay: 550.ms)
-                              .fadeIn(duration: 500.ms),
+                          _ArtDecoDivider(
+                            accent: _scene.accent,
+                          ).animate(delay: 550.ms).fadeIn(duration: 500.ms),
 
                           const SizedBox(height: 20),
 
                           // JOURNEY CARDS
                           SizedBox(
                             height: 160,
-                            child: _sessions.isEmpty
-                                ? _EmptyJourneys()
-                                : _JourneyCarousel(sessions: _sessions),
+                            child:
+                                _sessions.isEmpty
+                                    ? _EmptyJourneys()
+                                    : _JourneyCarousel(sessions: _sessions),
                           ).animate(delay: 650.ms).fadeIn(duration: 500.ms),
 
                           const SizedBox(height: 28),
@@ -376,14 +600,14 @@ class _HomeScreenState extends State<HomeScreen>
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
                     child: _BrassLever(
-                      accent: _scene.accent,
-                      pulse: _pulse,
-                      onIgnite: () {
-                        AudioService().playClick();
-                        HapticFeedback.heavyImpact();
-                        context.push(AppRouter.booking);
-                      },
-                    )
+                          accent: _scene.accent,
+                          pulse: _pulse,
+                          onIgnite: () {
+                            AudioService().playImportantClick();
+                            HapticFeedback.heavyImpact();
+                            context.push(AppRouter.booking);
+                          },
+                        )
                         .animate(delay: 750.ms)
                         .fadeIn(duration: 600.ms)
                         .slideY(begin: 0.4, end: 0, curve: Curves.easeOutBack),
@@ -410,6 +634,17 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             ),
+
+            // ── Level-up celebration ────────────────────────────
+            if (_showLevelUp)
+              Positioned.fill(
+                child: LevelUpOverlay(
+                  newLevel: _stationLevel,
+                  stationName: stationNameForLevel(_stationLevel),
+                  stationEmoji: stationEmojiForLevel(_stationLevel),
+                  onDismiss: () => setState(() => _showLevelUp = false),
+                ),
+              ),
           ],
         ),
       ),
@@ -418,81 +653,194 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 14, 22, 0),
-      child: Row(
-        children: [
-          // Logo mark
-          AnimatedBuilder(
-            animation: _pulse,
-            builder: (_, __) => Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_P.brassLt, _P.brass, _P.brassDk],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color:
-                    _P.brass.withValues(alpha: 0.25 + _pulse.value * 0.2),
-                    blurRadius: 18,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.train_rounded, color: _P.ink, size: 22),
-            ),
-          ),
-
-          const SizedBox(width: 14),
-
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.fromLTRB(22, 14, 22, 0),
+          child: Row(
             children: [
-              Text('LUXE RAIL',
-                  style: GoogleFonts.cormorant(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+              // Logo mark
+              AnimatedBuilder(
+                animation: _pulse,
+                builder:
+                    (_, __) => Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [_P.brassLt, _P.brass, _P.brassDk],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _P.brass.withValues(
+                              alpha: 0.25 + _pulse.value * 0.2,
+                            ),
+                            blurRadius: 18,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.train_rounded,
+                        color: _P.ink,
+                        size: 22,
+                      ),
+                    ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _greeting,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: _P.cream,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                    Text(
+                      _focusMood.label,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                        color: _focusMood.glowColor.withValues(alpha: 0.85),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+              // Streak badge
+              if (_streak > 0)
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    context.push(AppRouter.stats);
+                  },
+                  child: AnimatedBuilder(
+                    animation: _pulse,
+                    builder:
+                        (_, __) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            color: const Color(0xFF281008),
+                            border: Border.all(
+                              color: const Color(
+                                0xFFFF6B35,
+                              ).withValues(alpha: 0.3 + _pulse.value * 0.2),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFFFF6B35,
+                                ).withValues(alpha: 0.1 + _pulse.value * 0.08),
+                                blurRadius: 12,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('🔥', style: TextStyle(fontSize: 12)),
+                              const SizedBox(width: 3),
+                              Text(
+                                '$_streak',
+                                style: GoogleFonts.spaceMono(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFFFF6B35),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                  ),
+                ),
+
+              const SizedBox(width: 4),
+
+              // Achievements button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.push(AppRouter.achievements);
+                },
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _P.raised,
+                    border: Border.all(color: _P.brass.withValues(alpha: 0.18)),
+                  ),
+                  child: const Center(
+                    child: Text('🏆', style: TextStyle(fontSize: 14)),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+              // Passport button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.push(AppRouter.passport);
+                },
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _P.raised,
+                    border: Border.all(color: _P.brass.withValues(alpha: 0.18)),
+                  ),
+                  child: const Center(
+                    child: Text('🛂', style: TextStyle(fontSize: 14)),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+
+              // History button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.push(AppRouter.history);
+                },
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _P.raised,
+                    border: Border.all(color: _P.brass.withValues(alpha: 0.18)),
+                  ),
+                  child: const Icon(
+                    Icons.auto_stories_rounded,
                     color: _P.cream,
-                    letterSpacing: 5,
-                  )),
-              Text(_scene.label,
-                  style: GoogleFonts.cormorant(
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                    color: _scene.accent.withValues(alpha: 0.85),
-                    letterSpacing: 1,
-                  )),
+                    size: 15,
+                  ),
+                ),
+              ),
             ],
           ),
-
-          const Spacer(),
-
-          // History button
-          GestureDetector(
-            onTap: () {
-              AudioService().playClick();
-              HapticFeedback.lightImpact();
-              context.push(AppRouter.history);
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _P.raised,
-                border: Border.all(color: _P.brass.withValues(alpha: 0.18)),
-              ),
-              child: const Icon(Icons.auto_stories_rounded,
-                  color: _P.cream, size: 19),
-            ),
-          ),
-        ],
-      ),
-    )
+        )
         .animate(delay: 50.ms)
         .fadeIn(duration: 450.ms)
         .slideY(begin: -0.2, end: 0);
@@ -558,26 +906,30 @@ class _SceneDioramaState extends State<_SceneDiorama> {
               Positioned.fill(
                 child: AnimatedBuilder(
                   animation: widget.breath,
-                  builder: (_, __) => Container(
-                    decoration: BoxDecoration(
-                      borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(arc)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _P.brass.withValues(
-                              alpha: 0.18 + widget.breath.value * 0.1),
-                          blurRadius: 32,
-                          spreadRadius: 4,
+                  builder:
+                      (_, __) => Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(arc),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _P.brass.withValues(
+                                alpha: 0.18 + widget.breath.value * 0.1,
+                              ),
+                              blurRadius: 32,
+                              spreadRadius: 4,
+                            ),
+                            BoxShadow(
+                              color: widget.scene.accent.withValues(
+                                alpha: 0.08 + widget.breath.value * 0.06,
+                              ),
+                              blurRadius: 60,
+                              spreadRadius: 10,
+                            ),
+                          ],
                         ),
-                        BoxShadow(
-                          color: widget.scene.accent.withValues(
-                              alpha: 0.08 + widget.breath.value * 0.06),
-                          blurRadius: 60,
-                          spreadRadius: 10,
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
                 ),
               ),
 
@@ -585,8 +937,9 @@ class _SceneDioramaState extends State<_SceneDiorama> {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(arc)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(arc),
+                    ),
                     border: Border.all(color: _P.brass, width: 3),
                   ),
                 ),
@@ -600,10 +953,13 @@ class _SceneDioramaState extends State<_SceneDiorama> {
                 bottom: 0,
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(arc - 5)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(arc - 5),
+                    ),
                     border: Border.all(
-                        color: _P.brass.withValues(alpha: 0.35), width: 1.5),
+                      color: _P.brass.withValues(alpha: 0.35),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -615,8 +971,9 @@ class _SceneDioramaState extends State<_SceneDiorama> {
                 right: 7,
                 bottom: 0,
                 child: ClipRRect(
-                  borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(arc - 7)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(arc - 7),
+                  ),
                   child: _SceneContent(
                     scene: widget.scene,
                     breath: widget.breath,
@@ -686,15 +1043,16 @@ class _SceneContent extends StatelessWidget {
     return AnimatedBuilder(
       animation: Listenable.merge([breath, train, stars, aurora]),
       builder: (_, __) {
-        final parallax = isActive
-            ? Offset(
-          (parallaxTouch.dx - containerWidth / 2) / 80,
-          (parallaxTouch.dy - containerHeight / 2) / 80,
-        )
-            : Offset(
-          math.sin(breath.value * math.pi) * 4,
-          0,
-        );
+        final parallax =
+            isActive
+                ? Offset(
+                  (parallaxTouch.dx - containerWidth / 2) / 80,
+                  (parallaxTouch.dy - containerHeight / 2) / 80,
+                )
+                : Offset(
+                  math.sin(breath.value * math.pi * 2) * 12,
+                  math.cos(breath.value * math.pi) * 3,
+                );
 
         return Stack(
           fit: StackFit.expand,
@@ -709,21 +1067,15 @@ class _SceneContent extends StatelessWidget {
                 painter: _StarsPainter(t: stars.value, parallax: parallax),
               ),
             if (scene.isAurora)
-              CustomPaint(
-                painter: _AuroraPainter(t: aurora.value),
-              ),
+              CustomPaint(painter: _AuroraPainter(t: aurora.value)),
             if (scene.shooters)
-              CustomPaint(
-                painter: _ShootersPainter(t: train.value),
-              ),
+              CustomPaint(painter: _ShootersPainter(t: train.value)),
             if (scene.sun)
               _SunBody(breathValue: breath.value, parallax: parallax),
             if (scene.moon)
               _MoonBody(breathValue: breath.value, parallax: parallax),
             if (scene.clouds)
-              CustomPaint(
-                painter: _CloudsPainter(t: breath.value),
-              ),
+              CustomPaint(painter: _CloudsPainter(t: breath.value)),
 
             // Mountains (3 parallax layers)
             _MountainStack(parallax: parallax, scene: scene),
@@ -739,19 +1091,12 @@ class _SceneContent extends StatelessWidget {
 
             // Fireflies
             if (scene.fireflies)
-              CustomPaint(
-                painter: _FirefliesPainter(t: aurora.value),
-              ),
+              CustomPaint(painter: _FirefliesPainter(t: aurora.value)),
             if (scene.lanterns)
-              CustomPaint(
-                painter: _LanternsPainter(t: train.value),
-              ),
+              CustomPaint(painter: _LanternsPainter(t: train.value)),
 
             // Location title overlay
-            _LocationOverlay(
-              scene: scene,
-              breath: breath.value,
-            ),
+            _LocationOverlay(scene: scene, breath: breath.value),
 
             // Glass reflection
             Positioned.fill(
@@ -799,14 +1144,18 @@ class _BrassCorner extends StatelessWidget {
 class _CornerOrnamentPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size s) {
-    final p = Paint()
-      ..color = _P.brass
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+    final p =
+        Paint()
+          ..color = _P.brass
+          ..strokeWidth = 2.5
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round;
     canvas.drawLine(Offset(2, s.height - 2), const Offset(2, 8), p);
     canvas.drawLine(
-        Offset(2, s.height - 2), Offset(s.width - 2, s.height - 2), p);
+      Offset(2, s.height - 2),
+      Offset(s.width - 2, s.height - 2),
+      p,
+    );
     canvas.drawCircle(const Offset(2, 2), 3, Paint()..color = _P.brass);
   }
 
@@ -835,7 +1184,7 @@ class _BrassPlate extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             scene.label.toUpperCase(),
-            style: GoogleFonts.cormorant(
+            style: GoogleFonts.cormorantGaramond(
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: _P.ink,
@@ -904,8 +1253,9 @@ class _SunBody extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFFCC30)
-                  .withValues(alpha: 0.4 + breathValue * 0.25),
+              color: const Color(
+                0xFFFFCC30,
+              ).withValues(alpha: 0.4 + breathValue * 0.25),
               blurRadius: 40,
               spreadRadius: 8,
             ),
@@ -936,8 +1286,9 @@ class _MoonBody extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color:
-                  Colors.white.withValues(alpha: 0.15 + breathValue * 0.1),
+                  color: Colors.white.withValues(
+                    alpha: 0.15 + breathValue * 0.1,
+                  ),
                   blurRadius: 40,
                   spreadRadius: 12,
                 ),
@@ -955,7 +1306,7 @@ class _MoonBody extends StatelessWidget {
                 colors: [
                   Color(0xFFF0F0F0),
                   Color(0xFFD8D8D8),
-                  Color(0xFFB8B8B8)
+                  Color(0xFFB8B8B8),
                 ],
               ),
             ),
@@ -985,7 +1336,11 @@ class _MountainStack extends StatelessWidget {
           child: CustomPaint(
             size: const Size(double.infinity, 220),
             painter: _MountainPainter(
-                alpha: 0.18, seed: 1, snowCapped: true, baseColor: Colors.black),
+              alpha: 0.18,
+              seed: 1,
+              snowCapped: true,
+              baseColor: Colors.black,
+            ),
           ),
         ),
         // Mid
@@ -996,10 +1351,11 @@ class _MountainStack extends StatelessWidget {
           child: CustomPaint(
             size: const Size(double.infinity, 160),
             painter: _MountainPainter(
-                alpha: 0.45,
-                seed: 2,
-                snowCapped: false,
-                baseColor: Colors.black),
+              alpha: 0.45,
+              seed: 2,
+              snowCapped: false,
+              baseColor: Colors.black,
+            ),
           ),
         ),
         // Near — darkest
@@ -1010,10 +1366,11 @@ class _MountainStack extends StatelessWidget {
           child: CustomPaint(
             size: const Size(double.infinity, 100),
             painter: _MountainPainter(
-                alpha: 0.78,
-                seed: 3,
-                snowCapped: false,
-                baseColor: Colors.black),
+              alpha: 0.78,
+              seed: 3,
+              snowCapped: false,
+              baseColor: Colors.black,
+            ),
           ),
         ),
       ],
@@ -1121,16 +1478,18 @@ class _Loco extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF3A2010),
                         borderRadius: BorderRadius.circular(2),
-                        border:
-                        Border.all(color: _P.brass.withValues(alpha: 0.5)),
+                        border: Border.all(
+                          color: _P.brass.withValues(alpha: 0.5),
+                        ),
                       ),
                       child: Center(
                         child: Container(
                           width: 7,
                           height: 5,
                           decoration: BoxDecoration(
-                            color:
-                            const Color(0xFFFFCC70).withValues(alpha: 0.5),
+                            color: const Color(
+                              0xFFFFCC70,
+                            ).withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(1),
                           ),
                         ),
@@ -1148,7 +1507,9 @@ class _Loco extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: const Color(0xFF2A2A2A),
                         border: Border.all(
-                            color: _P.brass.withValues(alpha: 0.3), width: 1),
+                          color: _P.brass.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
                       ),
                     ),
                   ),
@@ -1164,8 +1525,9 @@ class _Loco extends StatelessWidget {
                         color: const Color(0xFFFFEE88),
                         boxShadow: [
                           BoxShadow(
-                            color:
-                            const Color(0xFFFFEE88).withValues(alpha: 0.7),
+                            color: const Color(
+                              0xFFFFEE88,
+                            ).withValues(alpha: 0.7),
                             blurRadius: 12,
                             spreadRadius: 3,
                           ),
@@ -1200,8 +1562,9 @@ class _Loco extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFF2A2A2A),
                 border: Border.all(color: _P.brass.withValues(alpha: 0.35)),
-                borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(3)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(3),
+                ),
               ),
             ),
           ),
@@ -1260,21 +1623,9 @@ class _Loco extends StatelessWidget {
             ),
           ),
           // Wheels
-          Positioned(
-            bottom: 0,
-            left: 8,
-            child: _Wheel(size: 10),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 24,
-            child: _Wheel(size: 10),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 10,
-            child: _Wheel(size: 10),
-          ),
+          Positioned(bottom: 0, left: 8, child: _Wheel(size: 10)),
+          Positioned(bottom: 0, left: 24, child: _Wheel(size: 10)),
+          Positioned(bottom: 0, right: 10, child: _Wheel(size: 10)),
         ],
       ),
     );
@@ -1304,9 +1655,10 @@ class _Carriage extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: dark
-                      ? [const Color(0xFF4A3018), const Color(0xFF2A1808)]
-                      : [const Color(0xFF3A3A3A), const Color(0xFF1A1A1A)],
+                  colors:
+                      dark
+                          ? [const Color(0xFF4A3018), const Color(0xFF2A1808)]
+                          : [const Color(0xFF3A3A3A), const Color(0xFF1A1A1A)],
                 ),
                 borderRadius: BorderRadius.circular(3),
                 border: Border.all(color: _P.brass.withValues(alpha: 0.25)),
@@ -1314,21 +1666,21 @@ class _Carriage extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(
-                    4,
-                        (_) => Container(
-                      width: 6,
-                      height: 10,
-                      margin: const EdgeInsets.only(top: 4),
-                      decoration: BoxDecoration(
-                        color:
-                        const Color(0xFFFFDD80).withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(1),
-                        border: Border.all(
-                          color: _P.brass.withValues(alpha: 0.2),
-                          width: 0.5,
-                        ),
+                  4,
+                  (_) => Container(
+                    width: 6,
+                    height: 10,
+                    margin: const EdgeInsets.only(top: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFDD80).withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(1),
+                      border: Border.all(
+                        color: _P.brass.withValues(alpha: 0.2),
+                        width: 0.5,
                       ),
-                    )),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -1340,11 +1692,10 @@ class _Carriage extends StatelessWidget {
             child: Container(
               height: 4,
               decoration: BoxDecoration(
-                color: dark
-                    ? const Color(0xFF3A2818)
-                    : const Color(0xFF2A2A2A),
-                borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(3)),
+                color: dark ? const Color(0xFF3A2818) : const Color(0xFF2A2A2A),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(3),
+                ),
               ),
             ),
           ),
@@ -1411,10 +1762,7 @@ class _Wheel extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: const Color(0xFF707070),
-            border: Border.all(
-              color: const Color(0xFF505050),
-              width: 0.5,
-            ),
+            border: Border.all(color: const Color(0xFF505050), width: 0.5),
           ),
         ),
       ),
@@ -1467,36 +1815,41 @@ class _LocationOverlay extends StatelessWidget {
               _divLine(),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text('NOW APPROACHING',
-                    style: GoogleFonts.cormorant(
-                      fontSize: 8,
-                      color: Colors.white.withValues(alpha: 0.5),
-                      letterSpacing: 3,
-                    )),
+                child: Text(
+                  'NOW APPROACHING',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 8,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    letterSpacing: 3,
+                  ),
+                ),
               ),
               _divLine(),
             ],
           ),
           const SizedBox(height: 6),
           ShaderMask(
-            shaderCallback: (b) => LinearGradient(
-              colors: [Colors.white, scene.accent, Colors.white],
-              stops: [
-                (breath - 0.35).clamp(0.0, 1.0),
-                breath.clamp(0.0, 1.0),
-                (breath + 0.35).clamp(0.0, 1.0),
-              ],
-            ).createShader(b),
+            shaderCallback:
+                (b) => LinearGradient(
+                  colors: [Colors.white, scene.accent, Colors.white],
+                  stops: [
+                    (breath - 0.35).clamp(0.0, 1.0),
+                    breath.clamp(0.0, 1.0),
+                    (breath + 0.35).clamp(0.0, 1.0),
+                  ],
+                ).createShader(b),
             child: Text(
               scene.label.toUpperCase(),
-              style: GoogleFonts.cormorant(
+              style: GoogleFonts.cormorantGaramond(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
                 letterSpacing: 2.5,
                 shadows: [
                   Shadow(
-                      color: Colors.black.withValues(alpha: 0.8), blurRadius: 16)
+                    color: Colors.black.withValues(alpha: 0.8),
+                    blurRadius: 16,
+                  ),
                 ],
               ),
             ),
@@ -1514,7 +1867,7 @@ class _LocationOverlay extends StatelessWidget {
         colors: [
           Colors.transparent,
           Colors.white.withValues(alpha: 0.45),
-          Colors.transparent
+          Colors.transparent,
         ],
       ),
     ),
@@ -1542,12 +1895,12 @@ class _DepartureBoardStats extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: _P.panel,
-          border: Border.all(color: _P.brass.withValues(alpha: 0.18)),
-        ),
+      child: GlassCard(
+        borderRadius: 18,
+        blur: 16,
+        tint: const Color(0x18D4A853),
+        borderColor: _P.brass.withValues(alpha: 0.22),
+        padding: EdgeInsets.zero,
         child: Column(
           children: [
             // Board header
@@ -1561,7 +1914,7 @@ class _DepartureBoardStats extends StatelessWidget {
                     _P.brass,
                     _P.brassLt,
                     _P.brass,
-                    _P.brassDk
+                    _P.brassDk,
                   ],
                   stops: [0, 0.2, 0.5, 0.8, 1],
                 ),
@@ -1569,16 +1922,21 @@ class _DepartureBoardStats extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.confirmation_number_outlined,
-                      size: 13, color: _P.ink),
+                  const Icon(
+                    Icons.confirmation_number_outlined,
+                    size: 13,
+                    color: _P.ink,
+                  ),
                   const SizedBox(width: 8),
-                  Text('JOURNEY RECORD',
-                      style: GoogleFonts.cormorant(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: _P.ink,
-                        letterSpacing: 3,
-                      )),
+                  Text(
+                    'JOURNEY RECORD',
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _P.ink,
+                      letterSpacing: 3,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1641,10 +1999,10 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Entrance layout builds with alpha slider, then counts up:
     return AnimatedBuilder(
       animation: counter,
       builder: (_, __) {
-        final shown = (value * counter.value).round();
         return Column(
           children: [
             Row(
@@ -1652,9 +2010,11 @@ class _StatTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(
-                  '$shown',
-                  style: GoogleFonts.cormorant(
+                AnimatedCounter(
+                  value: value.toDouble(),
+                  duration: const Duration(milliseconds: 1400),
+                  curve: Curves.easeOutCirc,
+                  style: GoogleFonts.cormorantGaramond(
                     fontSize: 44,
                     fontWeight: FontWeight.w700,
                     color: _P.cream,
@@ -1662,12 +2022,14 @@ class _StatTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Text(unit,
-                    style: GoogleFonts.cormorant(
-                      fontSize: 13,
-                      color: _P.t2,
-                      fontStyle: FontStyle.italic,
-                    )),
+                Text(
+                  unit,
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 13,
+                    color: _P.t2,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -1676,13 +2038,15 @@ class _StatTile extends StatelessWidget {
               children: [
                 Icon(icon, size: 12, color: accent),
                 const SizedBox(width: 5),
-                Text(label,
-                    style: GoogleFonts.cormorant(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: accent,
-                      letterSpacing: 2,
-                    )),
+                Text(
+                  label,
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: accent,
+                    letterSpacing: 2,
+                  ),
+                ),
               ],
             ),
           ],
@@ -1713,13 +2077,15 @@ class _ArtDecoDivider extends StatelessWidget {
               children: [
                 _diamond(),
                 const SizedBox(width: 8),
-                Text('JOURNEYS',
-                    style: GoogleFonts.cormorant(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _P.brass,
-                      letterSpacing: 3,
-                    )),
+                Text(
+                  'JOURNEYS',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _P.brass,
+                    letterSpacing: 3,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 _diamond(),
               ],
@@ -1739,7 +2105,7 @@ class _ArtDecoDivider extends StatelessWidget {
           colors: [
             Colors.transparent,
             _P.brass.withValues(alpha: 0.4),
-            Colors.transparent
+            Colors.transparent,
           ],
         ),
       ),
@@ -1753,7 +2119,7 @@ class _ArtDecoDivider extends StatelessWidget {
       color: _P.brass,
       borderRadius: BorderRadius.circular(1),
       boxShadow: [
-        BoxShadow(color: _P.brass.withValues(alpha: 0.5), blurRadius: 6)
+        BoxShadow(color: _P.brass.withValues(alpha: 0.5), blurRadius: 6),
       ],
     ),
     transform: Matrix4.rotationZ(math.pi / 4),
@@ -1825,9 +2191,7 @@ class _TicketCard extends StatelessWidget {
               child: Stack(
                 children: [
                   // Hatch pattern
-                  Positioned.fill(
-                    child: CustomPaint(painter: _HatchPainter()),
-                  ),
+                  Positioned.fill(child: CustomPaint(painter: _HatchPainter())),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
                     child: Column(
@@ -1845,7 +2209,7 @@ class _TicketCard extends StatelessWidget {
                                       .split(' ')
                                       .first
                                       .toUpperCase(),
-                                  style: GoogleFonts.cormorant(
+                                  style: GoogleFonts.cormorantGaramond(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                     color: _P.cream,
@@ -1854,25 +2218,32 @@ class _TicketCard extends StatelessWidget {
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 7, vertical: 2),
+                                    horizontal: 7,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                        color: _P.brass.withValues(alpha: 0.4)),
+                                      color: _P.brass.withValues(alpha: 0.4),
+                                    ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: Text('FIRST CLASS',
-                                      style: GoogleFonts.cormorant(
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.w700,
-                                        color: _P.brass,
-                                        letterSpacing: 1.5,
-                                      )),
+                                  child: Text(
+                                    'FIRST CLASS',
+                                    style: GoogleFonts.cormorantGaramond(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w700,
+                                      color: _P.brass,
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                            Icon(Icons.spa_outlined,
-                                color: _P.brass.withValues(alpha: 0.5),
-                                size: 20),
+                            Icon(
+                              Icons.spa_outlined,
+                              color: _P.brass.withValues(alpha: 0.5),
+                              size: 20,
+                            ),
                           ],
                         ),
                         Row(
@@ -1917,22 +2288,27 @@ class _TicketCard extends StatelessWidget {
 
   Widget _detail(String l, String v, {bool end = false}) {
     return Column(
-      crossAxisAlignment: end ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment:
+          end ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        Text(l,
-            style: GoogleFonts.cormorant(
-              fontSize: 8,
-              color: _P.t2,
-              letterSpacing: 1,
-              fontWeight: FontWeight.w600,
-            )),
+        Text(
+          l,
+          style: GoogleFonts.cormorantGaramond(
+            fontSize: 8,
+            color: _P.t2,
+            letterSpacing: 1,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 2),
-        Text(v,
-            style: GoogleFonts.cormorant(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _P.cream,
-            )),
+        Text(
+          v,
+          style: GoogleFonts.cormorantGaramond(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: _P.cream,
+          ),
+        ),
       ],
     );
   }
@@ -1953,24 +2329,31 @@ class _EmptyJourneys extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.explore_outlined,
-                color: _P.brass.withValues(alpha: 0.5), size: 26),
+            Icon(
+              Icons.explore_outlined,
+              color: _P.brass.withValues(alpha: 0.5),
+              size: 26,
+            ),
             const SizedBox(width: 14),
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Your journey awaits',
-                    style: GoogleFonts.cormorant(
-                      fontSize: 16,
-                      color: _P.cream,
-                      fontStyle: FontStyle.italic,
-                    )),
-                Text('Pull the lever to begin',
-                    style: GoogleFonts.cormorant(
-                      fontSize: 11,
-                      color: _P.t2,
-                    )),
+                Text(
+                  'Your journey awaits',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 16,
+                    color: _P.cream,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                Text(
+                  'Pull the lever to begin',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 11,
+                    color: _P.t2,
+                  ),
+                ),
               ],
             ),
           ],
@@ -1983,7 +2366,6 @@ class _EmptyJourneys extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════
 // BRASS LEVER CTA
 // ═══════════════════════════════════════════════════════════════
-
 class _BrassLever extends StatefulWidget {
   final Color accent;
   final Animation<double> pulse;
@@ -2001,22 +2383,26 @@ class _BrassLever extends StatefulWidget {
 
 class _BrassLeverState extends State<_BrassLever>
     with SingleTickerProviderStateMixin {
-  double _pull = 0;
+  final ValueNotifier<double> _pullN = ValueNotifier(0.0);
   bool _fired = false;
   late AnimationController _reset;
 
   @override
   void initState() {
     super.initState();
-    _reset = AnimationController(vsync: this, duration: 380.ms);
-    _reset.addListener(() => setState(() {
-      _pull = _pull * (1 - _reset.value);
-    }));
+    _reset = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _reset.addListener(() {
+      _pullN.value = _pullN.value * (1 - _reset.value);
+    });
   }
 
   @override
   void dispose() {
     _reset.dispose();
+    _pullN.dispose();
     super.dispose();
   }
 
@@ -2027,114 +2413,152 @@ class _BrassLeverState extends State<_BrassLever>
 
     return AnimatedBuilder(
       animation: widget.pulse,
-      builder: (_, __) => Container(
-        height: h,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(h / 2),
-          color: _P.panel,
-          border: Border.all(
-              color: _P.brass.withValues(alpha: 0.1 + widget.pulse.value * 0.12)),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                offset: const Offset(0, 6),
-                blurRadius: 18),
-            if (_pull > 0.3)
-              BoxShadow(
-                  color: widget.accent.withValues(alpha: _pull * 0.25),
-                  blurRadius: 28,
-                  spreadRadius: -4),
-          ],
-        ),
-        padding: const EdgeInsets.all(4),
-        child: LayoutBuilder(
-          builder: (_, c) {
-            final track = c.maxWidth - knobW;
-            return Stack(
-              alignment: Alignment.centerLeft,
-              children: [
-                // Progress fill
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(h / 2),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: AnimatedContainer(
-                        duration: 80.ms,
-                        width: c.maxWidth * _pull,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              widget.accent.withValues(alpha: 0.15),
-                              Colors.transparent,
-                            ],
+      builder:
+          (_, child) => Container(
+            height: h,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(h / 2),
+              color: _P.panel,
+              border: Border.all(
+                color: _P.brass.withValues(
+                  alpha: 0.18 + widget.pulse.value * 0.12,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  offset: const Offset(0, 6),
+                  blurRadius: 18,
+                ),
+                // Pulsing glow ring
+                BoxShadow(
+                  color: widget.accent.withValues(
+                    alpha: 0.08 + widget.pulse.value * 0.12,
+                  ),
+                  blurRadius: 24 + widget.pulse.value * 12,
+                  spreadRadius: -2 + widget.pulse.value * 4,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(4),
+            child: child,
+          ),
+      child: LayoutBuilder(
+        builder: (_, c) {
+          final track = c.maxWidth - knobW;
+          return Stack(
+            alignment: Alignment.centerLeft,
+            children: [
+              // Progress fill — only repaints on pull change
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(h / 2),
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: _pullN,
+                    builder:
+                        (_, pull, __) => Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: c.maxWidth * pull,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  widget.accent.withValues(alpha: 0.15),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                  ),
+                ),
+              ),
+
+              // Hint text
+              Positioned(
+                right: 20,
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _pullN,
+                  builder:
+                      (_, pull, child) => AnimatedOpacity(
+                        opacity: pull < 0.2 ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 180),
+                        child: child,
+                      ),
+                  child: Row(
+                    children: [
+                      Text(
+                        'PULL TO IGNITE',
+                        style: GoogleFonts.cormorantGaramond(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _P.t2,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: _P.brass.withValues(alpha: 0.5),
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Knob — draggable, isolated repaint
+              ValueListenableBuilder<double>(
+                valueListenable: _pullN,
+                builder:
+                    (_, pull, __) => Positioned(
+                      left: pull * track,
+                      child: GestureDetector(
+                        onHorizontalDragUpdate: (d) {
+                          if (_fired) return;
+                          final newPull = (_pullN.value + d.delta.dx / track)
+                              .clamp(0.0, 1.0);
+                          _pullN.value = newPull;
+
+                          if (newPull > 0.5 && newPull < 0.52) {
+                            HapticFeedback.lightImpact();
+                          }
+                          if (newPull > 0.78 && newPull < 0.80) {
+                            HapticFeedback.mediumImpact();
+                          }
+                          if (newPull >= 0.96) {
+                            _fired = true;
+                            HapticFeedback.heavyImpact();
+                            widget.onIgnite();
+                            Future.delayed(
+                              const Duration(milliseconds: 900),
+                              () {
+                                if (mounted) {
+                                  _fired = false;
+                                  _reset.forward(from: 0);
+                                }
+                              },
+                            );
+                          }
+                        },
+                        onHorizontalDragEnd: (_) {
+                          if (!_fired) {
+                            _reset.forward(from: 0);
+                          }
+                        },
+                        child: RepaintBoundary(
+                          child: _Knob(
+                            pull: pull,
+                            fired: _fired,
+                            accent: widget.accent,
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                // Hint
-                Positioned(
-                  right: 20,
-                  child: AnimatedOpacity(
-                    opacity: _pull < 0.2 ? 1.0 : 0.0,
-                    duration: 180.ms,
-                    child: Row(
-                      children: [
-                        Text('PULL TO IGNITE',
-                            style: GoogleFonts.cormorant(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: _P.t2,
-                              letterSpacing: 2,
-                            )),
-                        const SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded,
-                            color: _P.brass.withValues(alpha: 0.5), size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-                // Knob
-                Positioned(
-                  left: _pull * track,
-                  child: GestureDetector(
-                    onHorizontalDragUpdate: (d) {
-                      if (_fired) return;
-                      setState(() =>
-                      _pull = (_pull + d.delta.dx / track).clamp(0.0, 1.0));
-                      if (_pull > 0.5 && _pull < 0.52) {
-                        HapticFeedback.lightImpact();
-                      }
-                      if (_pull > 0.78 && _pull < 0.80) {
-                        HapticFeedback.mediumImpact();
-                      }
-                      if (_pull >= 0.96) {
-                        setState(() => _fired = true);
-                        HapticFeedback.heavyImpact();
-                        widget.onIgnite();
-                        Future.delayed(900.ms, () {
-                          if (mounted) {
-                            setState(() => _fired = false);
-                            _reset.forward(from: 0);
-                          }
-                        });
-                      }
-                    },
-                    onHorizontalDragEnd: (_) {
-                      if (!_fired) {
-                        _reset.forward(from: 0);
-                      }
-                    },
-                    child: _Knob(
-                        pull: _pull, fired: _fired, accent: widget.accent),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -2161,13 +2585,15 @@ class _Knob extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
-              offset: const Offset(0, 4),
-              blurRadius: 12),
+            color: Colors.black.withValues(alpha: 0.5),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+          ),
           BoxShadow(
-              color: _P.brass.withValues(alpha: pull * 0.45),
-              blurRadius: 20,
-              spreadRadius: -4),
+            color: _P.brass.withValues(alpha: pull * 0.45),
+            blurRadius: 20,
+            spreadRadius: -4,
+          ),
         ],
       ),
       child: Row(
@@ -2189,27 +2615,31 @@ class _Knob extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(
-                  5,
-                      (_) => Container(
-                    width: 20,
-                    height: 1.5,
-                    decoration: BoxDecoration(
-                      color: _P.brassDk.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  )),
+                5,
+                (_) => Container(
+                  width: 20,
+                  height: 1.5,
+                  decoration: BoxDecoration(
+                    color: _P.brassDk.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+              ),
             ),
           ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(fired ? Icons.check_circle_rounded : Icons.train_rounded,
-                    color: _P.ink, size: 18),
+                Icon(
+                  fired ? Icons.check_circle_rounded : Icons.train_rounded,
+                  color: _P.ink,
+                  size: 18,
+                ),
                 const SizedBox(height: 3),
                 Text(
                   fired ? 'IGNITED!' : 'BEGIN',
-                  style: GoogleFonts.cormorant(
+                  style: GoogleFonts.cormorantGaramond(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: _P.ink,
@@ -2251,9 +2681,10 @@ class _StarsPainter extends CustomPainter {
       p.color = Colors.white.withValues(alpha: alpha.clamp(0.0, 1.0));
       canvas.drawCircle(Offset(x, y), r, p);
       if (depth > 0.8) {
-        final glow = Paint()
-          ..color = Colors.white.withValues(alpha: tw * 0.25)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+        final glow =
+            Paint()
+              ..color = Colors.white.withValues(alpha: tw * 0.25)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
         canvas.drawCircle(Offset(x, y), 5, glow);
       }
     }
@@ -2275,7 +2706,8 @@ class _AuroraPainter extends CustomPainter {
       path.moveTo(0, yb);
       for (double x = 0; x <= size.width; x += 4) {
         final nx = x / size.width;
-        final wh = math.sin(nx * math.pi * 3 + t * math.pi * 2 + w * 0.4) * 35 +
+        final wh =
+            math.sin(nx * math.pi * 3 + t * math.pi * 2 + w * 0.4) * 35 +
             math.sin(nx * math.pi * 6 + t * math.pi * 3.5 + w * 0.8) * 18;
         path.lineTo(x, yb + wh);
       }
@@ -2321,19 +2753,24 @@ class _ShootersPainter extends CustomPainter {
         Offset(cx - 80, cy - 50),
         Offset(cx, cy),
         Paint()
-          ..shader = LinearGradient(colors: [
-            Colors.transparent,
-            Colors.white.withValues(alpha: 0.85 * (1 - prog)),
-          ]).createShader(Rect.fromPoints(Offset(cx - 80, cy - 50), Offset(cx, cy)))
+          ..shader = LinearGradient(
+            colors: [
+              Colors.transparent,
+              Colors.white.withValues(alpha: 0.85 * (1 - prog)),
+            ],
+          ).createShader(
+            Rect.fromPoints(Offset(cx - 80, cy - 50), Offset(cx, cy)),
+          )
           ..strokeWidth = 2
           ..strokeCap = StrokeCap.round,
       );
       canvas.drawCircle(
-          Offset(cx, cy),
-          2.5,
-          Paint()
-            ..color = Colors.white.withValues(alpha: 1 - prog)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+        Offset(cx, cy),
+        2.5,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 1 - prog)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      );
     }
   }
 
@@ -2347,30 +2784,37 @@ class _CloudsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = Colors.white.withValues(alpha: 0.12)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    final p =
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.12)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     for (int i = 0; i < 4; i++) {
       final bx =
           (i * size.width * 0.35 + t * size.width * 0.45) % (size.width + 160) -
-              80;
+          80;
       final by = size.height * (0.1 + i * 0.07);
       final cw = 70.0 + i * 28;
       final ch = 22.0 + i * 8;
       canvas.drawOval(
-          Rect.fromCenter(center: Offset(bx, by), width: cw, height: ch), p);
+        Rect.fromCenter(center: Offset(bx, by), width: cw, height: ch),
+        p,
+      );
       canvas.drawOval(
-          Rect.fromCenter(
-              center: Offset(bx - cw * 0.28, by + ch * 0.2),
-              width: cw * 0.55,
-              height: ch * 0.75),
-          p);
+        Rect.fromCenter(
+          center: Offset(bx - cw * 0.28, by + ch * 0.2),
+          width: cw * 0.55,
+          height: ch * 0.75,
+        ),
+        p,
+      );
       canvas.drawOval(
-          Rect.fromCenter(
-              center: Offset(bx + cw * 0.28, by + ch * 0.18),
-              width: cw * 0.48,
-              height: ch * 0.68),
-          p);
+        Rect.fromCenter(
+          center: Offset(bx + cw * 0.28, by + ch * 0.18),
+          width: cw * 0.48,
+          height: ch * 0.68,
+        ),
+        p,
+      );
     }
   }
 
@@ -2384,21 +2828,24 @@ class _MountainPainter extends CustomPainter {
   final bool snowCapped;
   final Color baseColor;
 
-  _MountainPainter(
-      {required this.alpha,
-        required this.seed,
-        required this.snowCapped,
-        required this.baseColor});
+  _MountainPainter({
+    required this.alpha,
+    required this.seed,
+    required this.snowCapped,
+    required this.baseColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final rng = math.Random(seed);
     final pts = <Offset>[];
     for (int i = 0; i <= 10; i++) {
-      pts.add(Offset(
-        (i / 10) * size.width,
-        size.height - (0.2 + rng.nextDouble() * 0.72) * size.height,
-      ));
+      pts.add(
+        Offset(
+          (i / 10) * size.width,
+          size.height - (0.2 + rng.nextDouble() * 0.72) * size.height,
+        ),
+      );
     }
     final path = Path()..moveTo(0, size.height);
     path.lineTo(pts.first.dx, pts.first.dy);
@@ -2429,7 +2876,10 @@ class _MountainPainter extends CustomPainter {
         }
       }
       sp.close();
-      canvas.drawPath(sp, Paint()..color = Colors.white.withValues(alpha: 0.28));
+      canvas.drawPath(
+        sp,
+        Paint()..color = Colors.white.withValues(alpha: 0.28),
+      );
     }
   }
 
@@ -2440,17 +2890,24 @@ class _MountainPainter extends CustomPainter {
 class _TracksPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
+    final p =
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.18)
+          ..strokeWidth = 2
+          ..style = PaintingStyle.stroke;
     const vY = 0.44; // vanish Y ratio
     final vX = size.width * 0.5;
     final lL = size.width * 0.36, lR = size.width * 0.64;
     canvas.drawLine(
-        Offset(lL, size.height), Offset(vX - 2, size.height * vY), p);
+      Offset(lL, size.height),
+      Offset(vX - 2, size.height * vY),
+      p,
+    );
     canvas.drawLine(
-        Offset(lR, size.height), Offset(vX + 2, size.height * vY), p);
+      Offset(lR, size.height),
+      Offset(vX + 2, size.height * vY),
+      p,
+    );
     p.strokeWidth = 1.5;
     for (int i = 0; i < 18; i++) {
       final t = i / 18.0;
@@ -2481,16 +2938,20 @@ class _GroundPainter extends CustomPainter {
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
     final rng = math.Random(456);
-    final gp = Paint()
-      ..color = const Color(0xFF1A2010)
-      ..strokeWidth = 1.2
-      ..strokeCap = StrokeCap.round;
+    final gp =
+        Paint()
+          ..color = const Color(0xFF1A2010)
+          ..strokeWidth = 1.2
+          ..strokeCap = StrokeCap.round;
     for (int i = 0; i < 50; i++) {
       final x = rng.nextDouble() * size.width;
       final gh = 4 + rng.nextDouble() * 9;
       final sw = math.sin(t * math.pi * 2 + x * 0.04) * 2.5;
       canvas.drawLine(
-          Offset(x, size.height), Offset(x + sw, size.height - gh), gp);
+        Offset(x, size.height),
+        Offset(x + sw, size.height - gh),
+        gp,
+      );
     }
   }
 
@@ -2513,16 +2974,17 @@ class _FirefliesPainter extends CustomPainter {
       final blink = (math.sin(t * math.pi * 4.5 + bp) + 1) / 2;
       if (blink < 0.25) continue;
       canvas.drawCircle(
-          Offset(bx + fx, by + fy),
-          5,
-          Paint()
-            ..color = const Color(0xFFFFFF00).withValues(alpha: blink * 0.35)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7));
+        Offset(bx + fx, by + fy),
+        5,
+        Paint()
+          ..color = const Color(0xFFFFFF00).withValues(alpha: blink * 0.35)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+      );
       canvas.drawCircle(
-          Offset(bx + fx, by + fy),
-          2,
-          Paint()
-            ..color = const Color(0xFFFFFF80).withValues(alpha: blink * 0.8));
+        Offset(bx + fx, by + fy),
+        2,
+        Paint()..color = const Color(0xFFFFFF80).withValues(alpha: blink * 0.8),
+      );
     }
   }
 
@@ -2546,19 +3008,24 @@ class _LanternsPainter extends CustomPainter {
       final ls = 11.0 - prog * 3.5;
       final op = (1 - prog) * 0.75;
       canvas.drawCircle(
-          Offset(x, y),
-          ls * 2,
-          Paint()
-            ..color = const Color(0xFFFF6600).withValues(alpha: op * 0.35)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14));
+        Offset(x, y),
+        ls * 2,
+        Paint()
+          ..color = const Color(0xFFFF6600).withValues(alpha: op * 0.35)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
+      );
       canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromCenter(center: Offset(x, y), width: ls, height: ls * 1.4),
-            Radius.circular(ls * 0.28),
-          ),
-          Paint()..color = const Color(0xFFFFAA00).withValues(alpha: op));
-      canvas.drawCircle(Offset(x, y - ls * 0.1), ls * 0.28,
-          Paint()..color = const Color(0xFFFFFF60).withValues(alpha: op * 0.8));
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset(x, y), width: ls, height: ls * 1.4),
+          Radius.circular(ls * 0.28),
+        ),
+        Paint()..color = const Color(0xFFFFAA00).withValues(alpha: op),
+      );
+      canvas.drawCircle(
+        Offset(x, y - ls * 0.1),
+        ls * 0.28,
+        Paint()..color = const Color(0xFFFFFF60).withValues(alpha: op * 0.8),
+      );
     }
   }
 
@@ -2572,10 +3039,13 @@ class _MoonCraterPainter extends CustomPainter {
     final rng = math.Random(321);
     for (int i = 0; i < 5; i++) {
       canvas.drawCircle(
-          Offset(size.width * (0.2 + rng.nextDouble() * 0.6),
-              size.height * (0.2 + rng.nextDouble() * 0.6)),
-          2 + rng.nextDouble() * 3.5,
-          Paint()..color = Colors.grey.withValues(alpha: 0.28));
+        Offset(
+          size.width * (0.2 + rng.nextDouble() * 0.6),
+          size.height * (0.2 + rng.nextDouble() * 0.6),
+        ),
+        2 + rng.nextDouble() * 3.5,
+        Paint()..color = Colors.grey.withValues(alpha: 0.28),
+      );
     }
   }
 
@@ -2596,16 +3066,27 @@ class _TicketClipper extends CustomClipper<Path> {
     path.lineTo(size.width - r, 0);
     path.arcToPoint(Offset(size.width, r), radius: const Radius.circular(r));
     path.lineTo(size.width, ny - notch);
-    path.arcToPoint(Offset(size.width, ny + notch),
-        radius: const Radius.circular(notch), clockwise: false);
+    path.arcToPoint(
+      Offset(size.width, ny + notch),
+      radius: const Radius.circular(notch),
+      clockwise: false,
+    );
     path.lineTo(size.width, size.height - r);
-    path.arcToPoint(Offset(size.width - r, size.height),
-        radius: const Radius.circular(r));
+    path.arcToPoint(
+      Offset(size.width - r, size.height),
+      radius: const Radius.circular(r),
+    );
     path.lineTo(r, size.height);
-    path.arcToPoint(Offset(0, size.height - r), radius: const Radius.circular(r));
+    path.arcToPoint(
+      Offset(0, size.height - r),
+      radius: const Radius.circular(r),
+    );
     path.lineTo(0, ny + notch);
-    path.arcToPoint(Offset(0, ny - notch),
-        radius: const Radius.circular(notch), clockwise: false);
+    path.arcToPoint(
+      Offset(0, ny - notch),
+      radius: const Radius.circular(notch),
+      clockwise: false,
+    );
     path.lineTo(0, r);
     path.arcToPoint(Offset(r, 0), radius: const Radius.circular(r));
     return path;
@@ -2618,9 +3099,10 @@ class _TicketClipper extends CustomClipper<Path> {
 class _HatchPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = Colors.white.withValues(alpha: 0.025)
-      ..strokeWidth = 1;
+    final p =
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.025)
+          ..strokeWidth = 1;
     const gap = 16.0;
     for (double i = -size.height; i < size.width + size.height; i += gap) {
       canvas.drawLine(Offset(i, 0), Offset(i + size.height, size.height), p);

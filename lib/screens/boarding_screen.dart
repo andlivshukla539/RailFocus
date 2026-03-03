@@ -39,14 +39,14 @@ enum BoardingPhase {
 }
 
 class _P {
-  static const ink     = Color(0xFF07090F);
-  static const panel   = Color(0xFF131620);
-  static const brass   = Color(0xFFD4A853);
+  static const ink = Color(0xFF07090F);
+  static const panel = Color(0xFF131620);
+  static const brass = Color(0xFFD4A853);
   static const brassLt = Color(0xFFF0CC7A);
   static const brassDk = Color(0xFF8A6930);
-  static const cream   = Color(0xFFF5EDDB);
-  static const t2      = Color(0xFF9A8E78);
-  static const t3      = Color(0xFF564E40);
+  static const cream = Color(0xFFF5EDDB);
+  static const t2 = Color(0xFF9A8E78);
+  static const t3 = Color(0xFF564E40);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -102,7 +102,6 @@ class BoardingRitualScreen extends StatefulWidget {
 
 class _BoardingRitualScreenState extends State<BoardingRitualScreen>
     with TickerProviderStateMixin {
-
   BoardingPhase _currentPhase = BoardingPhase.standby;
   bool _showSkip = false;
 
@@ -117,8 +116,8 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
   late final String _deptTime;
 
   final _conductor = ConductorService();
-  final _storage   = StorageService();
-  final _audio     = AudioService();
+  final _storage = StorageService();
+  final _audio = AudioService();
   @override
   void initState() {
     super.initState();
@@ -128,40 +127,69 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
   }
 
   void _initializeData() {
-    _route  = widget.route ?? RouteModel.tokyoKyoto;
+    _route = widget.route ?? RouteModel.tokyoKyoto;
     _accent = _route.accentColor;
 
-    _announcement = _conductor.generateAnnouncement(SessionContext(
-      goal:                 widget.goal,
-      mood:                 widget.mood,
-      durationMinutes:      widget.durationMinutes ?? 25,
-      totalSessions:        _storage.getTotalSessions(),
-      currentStreak:        _storage.getStreak(),
-      lastSessionCompleted: _storage.getTotalSessions() > 0,
-      routeName:            _route.name,
-    ));
+    _announcement = _conductor.generateAnnouncement(
+      SessionContext(
+        goal: widget.goal,
+        mood: widget.mood,
+        durationMinutes: widget.durationMinutes ?? 25,
+        totalSessions: _storage.getTotalSessions(),
+        currentStreak: _storage.getStreak(),
+        lastSessionCompleted: _storage.getTotalSessions() > 0,
+        routeName: _route.name,
+      ),
+    );
 
     final now = DateTime.now();
-    _gate    = '${(now.minute % 9) + 1}'
+    _gate =
+        '${(now.minute % 9) + 1}'
         '${String.fromCharCode(65 + now.second % 5)}';
-    _deptTime = '${now.hour.toString().padLeft(2, '0')}'
+    _deptTime =
+        '${now.hour.toString().padLeft(2, '0')}'
         ':${(now.minute ~/ 5 * 5).toString().padLeft(2, '0')}';
   }
 
   void _initializeControllers() {
-    _fogCtrl = AnimationController(vsync: this,
-        duration: const Duration(seconds: 25))..repeat();
-    _glowCtrl = AnimationController(vsync: this,
-        duration: const Duration(seconds: 3))..repeat(reverse: true);
+    _fogCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 25),
+    )..repeat();
+    _glowCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
 
     _phaseControllers = {
-      BoardingPhase.intro:     AnimationController(vsync: this, duration: const Duration(milliseconds: 600)),
-      BoardingPhase.ticket:    AnimationController(vsync: this, duration: const Duration(milliseconds: 2200)),
-      BoardingPhase.flipBoard: AnimationController(vsync: this, duration: const Duration(milliseconds: 1800)),
-      BoardingPhase.bell:      AnimationController(vsync: this, duration: const Duration(milliseconds: 1200)),
-      BoardingPhase.conductor: AnimationController(vsync: this, duration: const Duration(milliseconds: 3500)),
-      BoardingPhase.doors:     AnimationController(vsync: this, duration: const Duration(milliseconds: 1800)),
-      BoardingPhase.depart:    AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
+      BoardingPhase.intro: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 600),
+      ),
+      BoardingPhase.ticket: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 2200),
+      ),
+      BoardingPhase.flipBoard: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1800),
+      ),
+      BoardingPhase.bell: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1200),
+      ),
+      BoardingPhase.conductor: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 6000),
+      ),
+      BoardingPhase.doors: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1800),
+      ),
+      BoardingPhase.depart: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1000),
+      ),
     };
   }
 
@@ -175,18 +203,18 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
 
   Future<void> _runSequence() async {
     final sequence = [
-      (BoardingPhase.intro,     null),
-      (BoardingPhase.ticket,    HapticFeedback.mediumImpact),
+      (BoardingPhase.intro, null),
+      (BoardingPhase.ticket, HapticFeedback.mediumImpact),
       (BoardingPhase.flipBoard, HapticFeedback.lightImpact),
-      (BoardingPhase.bell,      HapticFeedback.selectionClick),
+      (BoardingPhase.bell, HapticFeedback.selectionClick),
       (BoardingPhase.conductor, HapticFeedback.selectionClick),
-      (BoardingPhase.doors,     HapticFeedback.heavyImpact),
-      (BoardingPhase.depart,    HapticFeedback.heavyImpact),
+      (BoardingPhase.doors, HapticFeedback.heavyImpact),
+      (BoardingPhase.depart, HapticFeedback.heavyImpact),
     ];
 
     for (final step in sequence) {
       if (!mounted) return;
-      final phase       = step.$1;
+      final phase = step.$1;
       final hapticAction = step.$2;
 
       setState(() {
@@ -197,8 +225,8 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
           });
           _showSkip = true;
         }
-            if (phase == BoardingPhase.depart)  _showSkip = false;
-            {}
+        if (phase == BoardingPhase.depart) _showSkip = false;
+        {}
       });
 
       if (hapticAction != null) hapticAction();
@@ -211,12 +239,15 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
   void _depart() {
     _audio.playWhistle();
     if (mounted) {
-      context.go(AppRouter.focus, extra: {
-        'route': widget.route,
-        'mood': widget.mood,
-        'goal': widget.goal,
-        'durationMinutes': widget.durationMinutes,
-      });
+      context.go(
+        AppRouter.focus,
+        extra: {
+          'route': widget.route,
+          'mood': widget.mood,
+          'goal': widget.goal,
+          'durationMinutes': widget.durationMinutes,
+        },
+      );
     }
   }
 
@@ -241,18 +272,21 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
             Positioned.fill(
               child: AnimatedBuilder(
                 animation: _glowCtrl,
-                builder: (_, __) => DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(0, -0.4),
-                      radius: 1.3,
-                      colors: [
-                        _accent.withValues(alpha: 0.04 + _glowCtrl.value * 0.06),
-                        _P.ink,
-                      ],
+                builder:
+                    (_, __) => DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: const Alignment(0, -0.4),
+                          radius: 1.3,
+                          colors: [
+                            _accent.withValues(
+                              alpha: 0.04 + _glowCtrl.value * 0.06,
+                            ),
+                            _P.ink,
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
               ),
             ),
 
@@ -267,9 +301,13 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
             Positioned.fill(
               child: AnimatedBuilder(
                 animation: _glowCtrl,
-                builder: (_, __) => CustomPaint(
-                  painter: _BokehPainter(t: _glowCtrl.value, accent: _accent),
-                ),
+                builder:
+                    (_, __) => CustomPaint(
+                      painter: _BokehPainter(
+                        t: _glowCtrl.value,
+                        accent: _accent,
+                      ),
+                    ),
               ),
             ),
 
@@ -278,7 +316,9 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
               child: RepaintBoundary(
                 child: AnimatedBuilder(
                   animation: _fogCtrl,
-                  builder: (_, __) => CustomPaint(painter: _FogPainter(t: _fogCtrl.value)),
+                  builder:
+                      (_, __) =>
+                          CustomPaint(painter: _FogPainter(t: _fogCtrl.value)),
                 ),
               ),
             ),
@@ -290,9 +330,9 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final availH = constraints.maxHeight;
-                  final headerH = 96.0;   // header + top spacing
-                  final skipH   = _showSkip ? 64.0 : 20.0;
-                  final phaseH  = availH - headerH - skipH;
+                  final headerH = 96.0; // header + top spacing
+                  final skipH = _showSkip ? 64.0 : 20.0;
+                  final phaseH = availH - headerH - skipH;
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -307,16 +347,17 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
                           duration: const Duration(milliseconds: 500),
                           switchInCurve: Curves.easeOut,
                           switchOutCurve: Curves.easeIn,
-                          transitionBuilder: (child, anim) => FadeTransition(
-                            opacity: anim,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0, 0.04),
-                                end: Offset.zero,
-                              ).animate(anim),
-                              child: child,
-                            ),
-                          ),
+                          transitionBuilder:
+                              (child, anim) => FadeTransition(
+                                opacity: anim,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, 0.04),
+                                    end: Offset.zero,
+                                  ).animate(anim),
+                                  child: child,
+                                ),
+                              ),
                           child: KeyedSubtree(
                             key: ValueKey(_currentPhase),
                             child: _buildPhase(),
@@ -341,10 +382,12 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
                 child: IgnorePointer(
                   child: AnimatedBuilder(
                     animation: _phaseControllers[BoardingPhase.depart]!,
-                    builder: (_, __) => CustomPaint(
-                      painter: _HeavySteamPainter(
-                          t: _phaseControllers[BoardingPhase.depart]!.value),
-                    ),
+                    builder:
+                        (_, __) => CustomPaint(
+                          painter: _HeavySteamPainter(
+                            t: _phaseControllers[BoardingPhase.depart]!.value,
+                          ),
+                        ),
                   ),
                 ),
               ),
@@ -359,7 +402,10 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       radius: 1.0,
-                      colors: [Colors.transparent, _P.ink.withValues(alpha: 0.65)],
+                      colors: [
+                        Colors.transparent,
+                        _P.ink.withValues(alpha: 0.65),
+                      ],
                       stops: const [0.45, 1.0],
                     ),
                   ),
@@ -382,12 +428,19 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
-                    colors: [_P.brassLt, _P.brass, _P.brassDk]),
-                boxShadow: [BoxShadow(color: _P.brass.withValues(alpha: 0.4), blurRadius: 16)],
+                  colors: [_P.brassLt, _P.brass, _P.brassDk],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _P.brass.withValues(alpha: 0.4),
+                    blurRadius: 16,
+                  ),
+                ],
               ),
               child: const Icon(Icons.train_rounded, color: _P.ink, size: 22),
             ),
@@ -395,17 +448,24 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('LUXE RAIL',
-                    style: GoogleFonts.cormorant(
-                      fontSize: 20, fontWeight: FontWeight.w700,
-                      color: _P.cream, letterSpacing: 5,
-                    )),
-                Text(_route.name.toUpperCase(),
-                    style: GoogleFonts.cormorant(
-                      fontSize: 11, fontStyle: FontStyle.italic,
-                      color: _accent.withValues(alpha: 0.9),
-                      letterSpacing: 1,
-                    )),
+                Text(
+                  'LUXE RAIL',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: _P.cream,
+                    letterSpacing: 5,
+                  ),
+                ),
+                Text(
+                  _route.name.toUpperCase(),
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color: _accent.withValues(alpha: 0.9),
+                    letterSpacing: 1,
+                  ),
+                ),
               ],
             ),
           ],
@@ -416,21 +476,33 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
 
   Widget _buildPhase() {
     return switch (_currentPhase) {
-      BoardingPhase.standby   => const SizedBox.shrink(),
-      BoardingPhase.intro     => const SizedBox.shrink(),
-      BoardingPhase.ticket    => _TicketPhase(
-          ctrl: _phaseControllers[BoardingPhase.ticket]!, accent: _accent, route: _route),
+      BoardingPhase.standby => const SizedBox.shrink(),
+      BoardingPhase.intro => const SizedBox.shrink(),
+      BoardingPhase.ticket => _TicketPhase(
+        ctrl: _phaseControllers[BoardingPhase.ticket]!,
+        accent: _accent,
+        route: _route,
+      ),
       BoardingPhase.flipBoard => _FlipBoardPhase(
-          ctrl: _phaseControllers[BoardingPhase.flipBoard]!, accent: _accent,
-          gate: _gate, time: _deptTime),
-      BoardingPhase.bell      => _BellPhase(
-          ctrl: _phaseControllers[BoardingPhase.bell]!, accent: _accent),
+        ctrl: _phaseControllers[BoardingPhase.flipBoard]!,
+        accent: _accent,
+        gate: _gate,
+        time: _deptTime,
+      ),
+      BoardingPhase.bell => _BellPhase(
+        ctrl: _phaseControllers[BoardingPhase.bell]!,
+        accent: _accent,
+      ),
       BoardingPhase.conductor => _ConductorPhase(
-          ctrl: _phaseControllers[BoardingPhase.conductor]!, accent: _accent,
-          announcement: _announcement),
-      BoardingPhase.doors     => _DoorsPhase(
-          ctrl: _phaseControllers[BoardingPhase.doors]!, accent: _accent),
-      BoardingPhase.depart    => _DepartPhase(accent: _accent),
+        ctrl: _phaseControllers[BoardingPhase.conductor]!,
+        accent: _accent,
+        announcement: _announcement,
+      ),
+      BoardingPhase.doors => _DoorsPhase(
+        ctrl: _phaseControllers[BoardingPhase.doors]!,
+        accent: _accent,
+      ),
+      BoardingPhase.depart => _DepartPhase(accent: _accent),
     };
   }
 }
@@ -449,12 +521,22 @@ class _CinematicBars extends StatelessWidget {
       animation: ctrl,
       builder: (_, __) {
         final h = 36.0 * Curves.easeOutCubic.transform(ctrl.value);
-        return Stack(children: [
-          Positioned(top: 0, left: 0, right: 0,
-              child: Container(height: h, color: Colors.black)),
-          Positioned(bottom: 0, left: 0, right: 0,
-              child: Container(height: h, color: Colors.black)),
-        ]);
+        return Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(height: h, color: Colors.black),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(height: h, color: Colors.black),
+            ),
+          ],
+        );
       },
     );
   }
@@ -479,10 +561,14 @@ class _SkipButton extends StatelessWidget {
           color: _P.panel.withValues(alpha: 0.6),
           border: Border.all(color: _P.brass.withValues(alpha: 0.18)),
         ),
-        child: Text('SKIP CEREMONY',
-            style: GoogleFonts.dmMono(
-              fontSize: 9, color: _P.t2, letterSpacing: 2,
-            )),
+        child: Text(
+          'SKIP CEREMONY',
+          style: GoogleFonts.spaceMono(
+            fontSize: 9,
+            color: _P.t2,
+            letterSpacing: 2,
+          ),
+        ),
       ),
     );
   }
@@ -497,21 +583,33 @@ class _TicketPhase extends StatelessWidget {
   final Color accent;
   final RouteModel route;
 
-  const _TicketPhase({required this.ctrl, required this.accent, required this.route});
+  const _TicketPhase({
+    required this.ctrl,
+    required this.accent,
+    required this.route,
+  });
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: ctrl,
       builder: (_, __) {
-        final t       = ctrl.value;
+        final t = ctrl.value;
         // easeOutBack overshoots 1.0 — clamp all values used in Opacity/scale
-        final appear  = Curves.easeOutBack.transform(_iv(t, 0.0, 0.12)).clamp(0.0, 1.0);
-        final scan    = Curves.easeInOut.transform(_iv(t, 0.12, 0.45)).clamp(0.0, 1.0);
-        final punch   = Curves.easeOutCubic.transform(_iv(t, 0.45, 0.58)).clamp(0.0, 1.0);
+        final appear = Curves.easeOutBack
+            .transform(_iv(t, 0.0, 0.12))
+            .clamp(0.0, 1.0);
+        final scan = Curves.easeInOut
+            .transform(_iv(t, 0.12, 0.45))
+            .clamp(0.0, 1.0);
+        final punch = Curves.easeOutCubic
+            .transform(_iv(t, 0.45, 0.58))
+            .clamp(0.0, 1.0);
         final shimmer = _iv(t, 0.58, 0.75).clamp(0.0, 1.0);
-        final stamp   = Curves.easeOutBack.transform(_iv(t, 0.75, 0.90)).clamp(0.0, 1.0);
-        final done    = _iv(t, 0.90, 1.0).clamp(0.0, 1.0);
+        final stamp = Curves.easeOutBack
+            .transform(_iv(t, 0.75, 0.90))
+            .clamp(0.0, 1.0);
+        final done = _iv(t, 0.90, 1.0).clamp(0.0, 1.0);
 
         return Center(
           child: Column(
@@ -522,119 +620,175 @@ class _TicketPhase extends StatelessWidget {
                 child: Opacity(
                   opacity: appear.clamp(0.0, 1.0),
                   child: SizedBox(
-                    width: 180, height: 230,
+                    width: 180,
+                    height: 230,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         Container(
-                          width: 160, height: 210,
+                          width: 160,
+                          height: 210,
                           decoration: BoxDecoration(
                             color: _P.panel,
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: accent.withValues(alpha: 0.3 + stamp * 0.4),
+                              color: accent.withValues(
+                                alpha: 0.3 + stamp * 0.4,
+                              ),
                               width: 2,
                             ),
-                            boxShadow: [BoxShadow(
-                              color: accent.withValues(alpha: 0.15 + stamp * 0.25),
-                              blurRadius: 30 + stamp * 20,
-                            )],
+                            boxShadow: [
+                              BoxShadow(
+                                color: accent.withValues(
+                                  alpha: 0.15 + stamp * 0.25,
+                                ),
+                                blurRadius: 30 + stamp * 20,
+                              ),
+                            ],
                           ),
-                          child: Stack(children: [
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(route.emoji, style: const TextStyle(fontSize: 42)),
-                                const SizedBox(height: 10),
-                                Text('BOARDING PASS',
-                                    style: GoogleFonts.dmMono(
-                                      fontSize: 10, fontWeight: FontWeight.w700,
-                                      color: _P.t2, letterSpacing: 2,
-                                    )),
-                                const SizedBox(height: 6),
-                                Text(route.name.toUpperCase(),
-                                    style: GoogleFonts.cormorant(
-                                      fontSize: 14, fontWeight: FontWeight.w600,
-                                      color: _P.cream, letterSpacing: 1,
-                                    )),
-                              ],
-                            ),
-                            if (punch > 0)
-                              Positioned(
-                                top: 18, right: 18,
-                                child: Opacity(
-                                  opacity: punch,
-                                  child: Container(
-                                    width: 22, height: 22,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle, color: _P.ink,
-                                      border: Border.all(
-                                          color: accent.withValues(alpha: 0.4), width: 1.5),
-                                    ),
-                                    child: Icon(Icons.check_rounded, size: 12, color: accent),
+                          child: Stack(
+                            children: [
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    route.emoji,
+                                    style: const TextStyle(fontSize: 42),
                                   ),
-                                ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'BOARDING PASS',
+                                    style: GoogleFonts.spaceMono(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: _P.t2,
+                                      letterSpacing: 2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    route.name.toUpperCase(),
+                                    style: GoogleFonts.cormorantGaramond(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: _P.cream,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            if (stamp > 0)
-                              Center(
-                                child: Transform.scale(
-                                  scale: stamp,
-                                  child: Transform.rotate(
-                                    angle: -0.15,
+                              if (punch > 0)
+                                Positioned(
+                                  top: 18,
+                                  right: 18,
+                                  child: Opacity(
+                                    opacity: punch,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 14, vertical: 6),
+                                      width: 22,
+                                      height: 22,
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: accent, width: 2.5),
-                                        borderRadius: BorderRadius.circular(6),
+                                        shape: BoxShape.circle,
+                                        color: _P.ink,
+                                        border: Border.all(
+                                          color: accent.withValues(alpha: 0.4),
+                                          width: 1.5,
+                                        ),
                                       ),
-                                      child: Text('VALIDATED',
-                                          style: GoogleFonts.dmMono(
-                                            fontSize: 12, fontWeight: FontWeight.w800,
-                                            color: accent, letterSpacing: 3,
-                                          )),
+                                      child: Icon(
+                                        Icons.check_rounded,
+                                        size: 12,
+                                        color: accent,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            if (shimmer > 0 && shimmer < 1)
-                              Positioned.fill(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: CustomPaint(
-                                    painter: _ShimmerPainter(t: shimmer, accent: accent),
+                              if (stamp > 0)
+                                Center(
+                                  child: Transform.scale(
+                                    scale: stamp,
+                                    child: Transform.rotate(
+                                      angle: -0.15,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: accent,
+                                            width: 2.5,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'VALIDATED',
+                                          style: GoogleFonts.spaceMono(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: accent,
+                                            letterSpacing: 3,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ]),
+                              if (shimmer > 0 && shimmer < 1)
+                                Positioned.fill(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: CustomPaint(
+                                      painter: _ShimmerPainter(
+                                        t: shimmer,
+                                        accent: accent,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                         if (scan > 0 && scan < 1)
                           Positioned(
-                            top: 15 + (195 * scan), left: 5, right: 5,
+                            top: 15 + (195 * scan),
+                            left: 5,
+                            right: 5,
                             child: Container(
                               height: 3,
                               decoration: BoxDecoration(
                                 color: accent,
-                                boxShadow: [BoxShadow(
-                                  color: accent.withValues(alpha: 0.8),
-                                  blurRadius: 20, spreadRadius: 3,
-                                )],
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: accent.withValues(alpha: 0.8),
+                                    blurRadius: 20,
+                                    spreadRadius: 3,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         if (punch > 0 && punch < 1)
                           Positioned(
-                            top: -30 + (48 * punch), right: 20,
+                            top: -30 + (48 * punch),
+                            right: 20,
                             child: Container(
-                              width: 30, height: 40,
+                              width: 30,
+                              height: 40,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [_P.brassLt, _P.brass, _P.brassDk],
-                                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
                                 ),
                                 borderRadius: BorderRadius.circular(6),
-                                boxShadow: [BoxShadow(
-                                    color: _P.brass.withValues(alpha: 0.5), blurRadius: 12)],
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _P.brass.withValues(alpha: 0.5),
+                                    blurRadius: 12,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -652,11 +806,15 @@ class _TicketPhase extends StatelessWidget {
                   children: [
                     Icon(Icons.check_circle_rounded, color: accent, size: 20),
                     const SizedBox(width: 10),
-                    Text('TICKET VALIDATED',
-                        style: GoogleFonts.dmMono(
-                          fontSize: 12, fontWeight: FontWeight.w700,
-                          color: accent, letterSpacing: 2,
-                        )),
+                    Text(
+                      'TICKET VALIDATED',
+                      style: GoogleFonts.spaceMono(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: accent,
+                        letterSpacing: 2,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -678,8 +836,10 @@ class _FlipBoardPhase extends StatelessWidget {
   final String gate, time;
 
   const _FlipBoardPhase({
-    required this.ctrl, required this.accent,
-    required this.gate, required this.time,
+    required this.ctrl,
+    required this.accent,
+    required this.gate,
+    required this.time,
   });
 
   @override
@@ -694,25 +854,42 @@ class _FlipBoardPhase extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('PLATFORM',
-                  style: GoogleFonts.dmMono(fontSize: 10, color: _P.t2, letterSpacing: 4)),
+              Text(
+                'PLATFORM',
+                style: GoogleFonts.spaceMono(
+                  fontSize: 10,
+                  color: _P.t2,
+                  letterSpacing: 4,
+                ),
+              ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0A0C14),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: _P.brass.withValues(alpha: 0.25)),
-                  boxShadow: [BoxShadow(
+                  boxShadow: [
+                    BoxShadow(
                       color: Colors.black.withValues(alpha: 0.6),
-                      blurRadius: 20, offset: const Offset(0, 8))],
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (int i = 0; i < gate.length; i++) ...[
-                      _FlipChar(finalChar: gate[i], progress: t,
-                          charIndex: i, totalChars: gate.length),
+                      _FlipChar(
+                        finalChar: gate[i],
+                        progress: t,
+                        charIndex: i,
+                        totalChars: gate.length,
+                      ),
                       if (i < gate.length - 1) const SizedBox(width: 6),
                     ],
                   ],
@@ -727,23 +904,32 @@ class _FlipBoardPhase extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        width: 36, height: 36,
+                        width: 36,
+                        height: 36,
                         child: CustomPaint(
-                            painter: _ClockPainter(accent: accent, time: time)),
+                          painter: _ClockPainter(accent: accent, time: time),
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('DEPARTURE',
-                              style: GoogleFonts.dmMono(
-                                fontSize: 8, color: _P.t3, letterSpacing: 2,
-                              )),
-                          Text(time,
-                              style: GoogleFonts.cormorant(
-                                fontSize: 28, fontWeight: FontWeight.w700,
-                                color: _P.cream,
-                              )),
+                          Text(
+                            'DEPARTURE',
+                            style: GoogleFonts.spaceMono(
+                              fontSize: 8,
+                              color: _P.t3,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          Text(
+                            time,
+                            style: GoogleFonts.cormorantGaramond(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: _P.cream,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -764,15 +950,17 @@ class _FlipChar extends StatelessWidget {
   final int charIndex, totalChars;
 
   const _FlipChar({
-    required this.finalChar, required this.progress,
-    required this.charIndex, required this.totalChars,
+    required this.finalChar,
+    required this.progress,
+    required this.charIndex,
+    required this.totalChars,
   });
 
   @override
   Widget build(BuildContext context) {
     final settleStart = 0.3 + charIndex * 0.12;
-    final settleEnd   = settleStart + 0.2;
-    final settled     = _iv(progress, settleStart, settleEnd);
+    final settleEnd = settleStart + 0.2;
+    final settled = _iv(progress, settleStart, settleEnd);
 
     String display;
     if (settled >= 1.0) {
@@ -782,45 +970,68 @@ class _FlipChar extends StatelessWidget {
     } else {
       final rng = math.Random((progress * 200).toInt() + charIndex * 37);
       display = String.fromCharCode(
-          (finalChar.codeUnitAt(0) >= 65 && finalChar.codeUnitAt(0) <= 90)
-              ? 65 + rng.nextInt(26)
-              : 48 + rng.nextInt(10));
+        (finalChar.codeUnitAt(0) >= 65 && finalChar.codeUnitAt(0) <= 90)
+            ? 65 + rng.nextInt(26)
+            : 48 + rng.nextInt(10),
+      );
     }
 
     return Container(
-      width: 44, height: 60,
+      width: 44,
+      height: 60,
       decoration: BoxDecoration(
         color: const Color(0xFF1A1C24),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: settled >= 1.0
-              ? _P.brass.withValues(alpha: 0.4)
-              : _P.t3.withValues(alpha: 0.2),
+          color:
+              settled >= 1.0
+                  ? _P.brass.withValues(alpha: 0.4)
+                  : _P.t3.withValues(alpha: 0.2),
         ),
-        boxShadow: settled >= 1.0
-            ? [BoxShadow(color: _P.brass.withValues(alpha: 0.2), blurRadius: 10)]
-            : null,
+        boxShadow:
+            settled >= 1.0
+                ? [
+                  BoxShadow(
+                    color: _P.brass.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                  ),
+                ]
+                : null,
       ),
-      child: Stack(children: [
-        Positioned(
-          top: 29, left: 4, right: 4,
-          child: Container(height: 1, color: Colors.black.withValues(alpha: 0.5)),
-        ),
-        Center(
-          child: Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.002)
-              ..rotateX(settled < 1.0
-                  ? math.sin(progress * math.pi * 12 + charIndex) * 0.15 : 0),
-            child: Text(display,
-                style: GoogleFonts.dmMono(
-                  fontSize: 30, fontWeight: FontWeight.w700,
-                  color: settled >= 1.0 ? _P.brassLt : _P.t2,
-                )),
+      child: Stack(
+        children: [
+          Positioned(
+            top: 29,
+            left: 4,
+            right: 4,
+            child: Container(
+              height: 1,
+              color: Colors.black.withValues(alpha: 0.5),
+            ),
           ),
-        ),
-      ]),
+          Center(
+            child: Transform(
+              alignment: Alignment.center,
+              transform:
+                  Matrix4.identity()
+                    ..setEntry(3, 2, 0.002)
+                    ..rotateX(
+                      settled < 1.0
+                          ? math.sin(progress * math.pi * 12 + charIndex) * 0.15
+                          : 0,
+                    ),
+              child: Text(
+                display,
+                style: GoogleFonts.spaceMono(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  color: settled >= 1.0 ? _P.brassLt : _P.t2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -839,19 +1050,20 @@ class _BellPhase extends StatelessWidget {
     return AnimatedBuilder(
       animation: ctrl,
       builder: (_, __) {
-        final t      = ctrl.value;
+        final t = ctrl.value;
         final appear = Curves.easeOut.transform(_iv(t, 0.0, 0.15));
-        final sway   = math.sin(t * math.pi * 6) * 0.08 * (1 - t);
-        final ring1  = _iv(t, 0.15, 0.55);
-        final ring2  = _iv(t, 0.45, 0.85);
-        final ring3  = _iv(t, 0.65, 1.0);
+        final sway = math.sin(t * math.pi * 6) * 0.08 * (1 - t);
+        final ring1 = _iv(t, 0.15, 0.55);
+        final ring2 = _iv(t, 0.45, 0.85);
+        final ring3 = _iv(t, 0.65, 1.0);
 
         return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 200, height: 200,
+                width: 200,
+                height: 200,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -863,7 +1075,9 @@ class _BellPhase extends StatelessWidget {
                       child: Transform.rotate(
                         angle: sway,
                         child: CustomPaint(
-                            size: const Size(80, 100), painter: _BellPainter()),
+                          size: const Size(80, 100),
+                          painter: _BellPainter(),
+                        ),
                       ),
                     ),
                   ],
@@ -872,11 +1086,15 @@ class _BellPhase extends StatelessWidget {
               const SizedBox(height: 16),
               Opacity(
                 opacity: appear,
-                child: Text('ALL ABOARD',
-                    style: GoogleFonts.cormorant(
-                      fontSize: 28, fontWeight: FontWeight.w700,
-                      color: _P.cream, letterSpacing: 4,
-                    )),
+                child: Text(
+                  'ALL ABOARD',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: _P.cream,
+                    letterSpacing: 4,
+                  ),
+                ),
               ),
             ],
           ),
@@ -921,7 +1139,9 @@ class _ConductorPhase extends StatelessWidget {
   final String announcement;
 
   const _ConductorPhase({
-    required this.ctrl, required this.accent, required this.announcement,
+    required this.ctrl,
+    required this.accent,
+    required this.announcement,
   });
 
   @override
@@ -929,14 +1149,24 @@ class _ConductorPhase extends StatelessWidget {
     return AnimatedBuilder(
       animation: ctrl,
       builder: (_, __) {
-        final t          = ctrl.value;
+        final t = ctrl.value;
         // easeOutBack overshoots 1.0 by design — clamp immediately so
         // Opacity / Transform.scale never receive an out-of-range value.
-        final iconAppear = Curves.easeOutBack.transform(_iv(t, 0.0, 0.20)).clamp(0.0, 1.0);
-        final hatTip     = Curves.easeInOutCubic.transform(_iv(t, 0.20, 0.35)).clamp(0.0, 1.0);
-        final hatReturn  = Curves.easeInOutCubic.transform(_iv(t, 0.35, 0.42)).clamp(0.0, 1.0);
-        final lineAppear = Curves.easeOut.transform(_iv(t, 0.30, 0.45)).clamp(0.0, 1.0);
-        final textFade   = Curves.easeOut.transform(_iv(t, 0.35, 0.65)).clamp(0.0, 1.0);
+        final iconAppear = Curves.easeOutBack
+            .transform(_iv(t, 0.0, 0.20))
+            .clamp(0.0, 1.0);
+        final hatTip = Curves.easeInOutCubic
+            .transform(_iv(t, 0.20, 0.35))
+            .clamp(0.0, 1.0);
+        final hatReturn = Curves.easeInOutCubic
+            .transform(_iv(t, 0.35, 0.42))
+            .clamp(0.0, 1.0);
+        final lineAppear = Curves.easeOut
+            .transform(_iv(t, 0.30, 0.45))
+            .clamp(0.0, 1.0);
+        final textFade = Curves.easeOut
+            .transform(_iv(t, 0.35, 0.65))
+            .clamp(0.0, 1.0);
 
         final tilt = hatTip < 1.0 ? hatTip * 0.12 : 0.12 * (1 - hatReturn);
 
@@ -959,7 +1189,8 @@ class _ConductorPhase extends StatelessWidget {
                       alignment: Alignment.bottomCenter,
                       transform: Matrix4.identity()..rotateZ(tilt),
                       child: Container(
-                        width: 68, height: 68,
+                        width: 68,
+                        height: 68,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: const LinearGradient(
@@ -967,13 +1198,19 @@ class _ConductorPhase extends StatelessWidget {
                             end: Alignment.bottomRight,
                             colors: [_P.brassLt, _P.brass, _P.brassDk],
                           ),
-                          boxShadow: [BoxShadow(
-                            color: _P.brass.withValues(alpha: 0.5),
-                            blurRadius: 28, spreadRadius: 4,
-                          )],
+                          boxShadow: [
+                            BoxShadow(
+                              color: _P.brass.withValues(alpha: 0.5),
+                              blurRadius: 28,
+                              spreadRadius: 4,
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.record_voice_over_rounded,
-                            color: _P.ink, size: 30),
+                        child: const Icon(
+                          Icons.record_voice_over_rounded,
+                          color: _P.ink,
+                          size: 30,
+                        ),
                       ),
                     ),
                   ),
@@ -983,11 +1220,15 @@ class _ConductorPhase extends StatelessWidget {
 
                 Opacity(
                   opacity: iconAppear,
-                  child: Text('THE CONDUCTOR',
-                      style: GoogleFonts.dmMono(
-                        fontSize: 9, fontWeight: FontWeight.w700,
-                        color: _P.brass, letterSpacing: 3,
-                      )),
+                  child: Text(
+                    'THE CONDUCTOR',
+                    style: GoogleFonts.spaceMono(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: _P.brass,
+                      letterSpacing: 3,
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 20),
@@ -1005,22 +1246,28 @@ class _ConductorPhase extends StatelessWidget {
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 18),
+                        horizontal: 20,
+                        vertical: 18,
+                      ),
                       decoration: BoxDecoration(
                         // Subtle card so text pops against dark background
                         color: _P.panel.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                            color: _P.brass.withValues(alpha: 0.18)),
-                        boxShadow: [BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          blurRadius: 16, offset: const Offset(0, 4),
-                        )],
+                          color: _P.brass.withValues(alpha: 0.18),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Text(
                         announcement,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.cormorant(
+                        style: GoogleFonts.cormorantGaramond(
                           // ↑ larger & bolder than original
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
@@ -1053,29 +1300,34 @@ class _ConductorPhase extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 40, height: 1,
+          width: 40,
+          height: 1,
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [
-              Colors.transparent, _P.brass.withValues(alpha: 0.5),
-            ]),
+            gradient: LinearGradient(
+              colors: [Colors.transparent, _P.brass.withValues(alpha: 0.5)],
+            ),
           ),
         ),
         const SizedBox(width: 12),
         Transform.rotate(
           angle: math.pi / 4,
           child: Container(
-            width: 6, height: 6,
+            width: 6,
+            height: 6,
             decoration: BoxDecoration(
-                color: _P.brass, borderRadius: BorderRadius.circular(1)),
+              color: _P.brass,
+              borderRadius: BorderRadius.circular(1),
+            ),
           ),
         ),
         const SizedBox(width: 12),
         Container(
-          width: 40, height: 1,
+          width: 40,
+          height: 1,
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [
-              _P.brass.withValues(alpha: 0.5), Colors.transparent,
-            ]),
+            gradient: LinearGradient(
+              colors: [_P.brass.withValues(alpha: 0.5), Colors.transparent],
+            ),
           ),
         ),
       ],
@@ -1097,52 +1349,88 @@ class _DoorsPhase extends StatelessWidget {
     return AnimatedBuilder(
       animation: ctrl,
       builder: (_, __) {
-        final t     = ctrl.value;
-        final gauge = Curves.easeInOut.transform(_iv(t, 0.0, 0.35)).clamp(0.0, 1.0);
-        final close = Curves.easeInOutCubic.transform(_iv(t, 0.25, 0.80)).clamp(0.0, 1.0);
-        final seal  = Curves.easeOutBack.transform(_iv(t, 0.80, 1.0)).clamp(0.0, 1.0);
+        final t = ctrl.value;
+        final gauge = Curves.easeInOut
+            .transform(_iv(t, 0.0, 0.35))
+            .clamp(0.0, 1.0);
+        final close = Curves.easeInOutCubic
+            .transform(_iv(t, 0.25, 0.80))
+            .clamp(0.0, 1.0);
+        final seal = Curves.easeOutBack
+            .transform(_iv(t, 0.80, 1.0))
+            .clamp(0.0, 1.0);
 
         return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 80, height: 50,
-                child: CustomPaint(painter: _GaugePainter(value: gauge, accent: accent)),
+                width: 80,
+                height: 50,
+                child: CustomPaint(
+                  painter: _GaugePainter(value: gauge, accent: accent),
+                ),
               ),
               const SizedBox(height: 20),
               SizedBox(
-                width: 220, height: 180,
-                child: Stack(children: [
-                  Positioned(left: 0, top: 0, bottom: 0,
-                      width: 110 - (close * 55), child: _DoorPanel()),
-                  Positioned(right: 0, top: 0, bottom: 0,
-                      width: 110 - (close * 55), child: _DoorPanel()),
-                  if (seal > 0)
-                    Center(
-                      child: Transform.scale(
-                        scale: seal,
-                        child: Container(
-                          width: 60, height: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                                colors: [_P.brassLt, _P.brass, _P.brassDk]),
-                            boxShadow: [BoxShadow(
-                                color: _P.brass.withValues(alpha: 0.7), blurRadius: 24)],
+                width: 220,
+                height: 180,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 110 - (close * 55),
+                      child: _DoorPanel(),
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 110 - (close * 55),
+                      child: _DoorPanel(),
+                    ),
+                    if (seal > 0)
+                      Center(
+                        child: Transform.scale(
+                          scale: seal,
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                colors: [_P.brassLt, _P.brass, _P.brassDk],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _P.brass.withValues(alpha: 0.7),
+                                  blurRadius: 24,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.lock_rounded,
+                              color: _P.ink,
+                              size: 26,
+                            ),
                           ),
-                          child: const Icon(Icons.lock_rounded, color: _P.ink, size: 26),
                         ),
                       ),
-                    ),
-                ]),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
-              Text('DOORS CLOSING',
-                  style: GoogleFonts.dmMono(
-                    fontSize: 13, fontWeight: FontWeight.w700,
-                    color: accent, letterSpacing: 3,
-                  )),
+              Text(
+                'DOORS CLOSING',
+                style: GoogleFonts.spaceMono(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: accent,
+                  letterSpacing: 3,
+                ),
+              ),
             ],
           ),
         );
@@ -1157,7 +1445,8 @@ class _DoorPanel extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-            colors: [Color(0xFF2A2A2A), Color(0xFF151515)]),
+          colors: [Color(0xFF2A2A2A), Color(0xFF151515)],
+        ),
         border: Border.all(color: _P.brass.withValues(alpha: 0.25)),
         borderRadius: BorderRadius.circular(10),
       ),
@@ -1183,18 +1472,24 @@ class _DepartPhase extends StatelessWidget {
           color: accent.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: accent.withValues(alpha: 0.4)),
-          boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.35), blurRadius: 40)],
+          boxShadow: [
+            BoxShadow(color: accent.withValues(alpha: 0.35), blurRadius: 40),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.train_rounded, color: accent, size: 30),
             const SizedBox(width: 18),
-            Text('DEPARTING...',
-                style: GoogleFonts.dmMono(
-                  fontSize: 17, fontWeight: FontWeight.w700,
-                  color: accent, letterSpacing: 3,
-                )),
+            Text(
+              'DEPARTING...',
+              style: GoogleFonts.spaceMono(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: accent,
+                letterSpacing: 3,
+              ),
+            ),
           ],
         ),
       ),
@@ -1212,31 +1507,49 @@ class _StationBgPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final p      = Paint()..color = Colors.white.withValues(alpha: 0.02);
+    final p = Paint()..color = Colors.white.withValues(alpha: 0.02);
     final floorY = size.height * 0.85;
 
     canvas.drawLine(
-      Offset(0, floorY), Offset(size.width, floorY),
-      Paint()..color = Colors.white.withValues(alpha: 0.04)..strokeWidth = 1,
+      Offset(0, floorY),
+      Offset(size.width, floorY),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.04)
+        ..strokeWidth = 1,
     );
 
     for (int i = 0; i < 3; i++) {
       final x1 = size.width * (0.1 + i * 0.35);
       final x2 = x1 + 18;
-      canvas.drawRect(Rect.fromLTWH(x1, size.height * 0.15, 8,
-          floorY - size.height * 0.15), p);
-      canvas.drawRect(Rect.fromLTWH(x2, size.height * 0.15, 8,
-          floorY - size.height * 0.15), p);
+      canvas.drawRect(
+        Rect.fromLTWH(x1, size.height * 0.15, 8, floorY - size.height * 0.15),
+        p,
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(x2, size.height * 0.15, 8, floorY - size.height * 0.15),
+        p,
+      );
       final archRect = Rect.fromLTWH(x1, size.height * 0.12, x2 + 8 - x1, 30);
-      canvas.drawArc(archRect, math.pi, math.pi, false,
-          p..style = PaintingStyle.stroke..strokeWidth = 3);
+      canvas.drawArc(
+        archRect,
+        math.pi,
+        math.pi,
+        false,
+        p
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3,
+      );
       p.style = PaintingStyle.fill;
     }
 
-    canvas.drawRect(Rect.fromLTWH(0, size.height * 0.08, size.width, 3),
-        Paint()..color = Colors.white.withValues(alpha: 0.015));
-    canvas.drawRect(Rect.fromLTWH(0, size.height * 0.12, size.width, 2),
-        Paint()..color = Colors.white.withValues(alpha: 0.01));
+    canvas.drawRect(
+      Rect.fromLTWH(0, size.height * 0.08, size.width, 3),
+      Paint()..color = Colors.white.withValues(alpha: 0.015),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(0, size.height * 0.12, size.width, 2),
+      Paint()..color = Colors.white.withValues(alpha: 0.01),
+    );
   }
 
   @override
@@ -1250,14 +1563,16 @@ class _BokehPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    final p = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     for (final dot in _kBokeh) {
-      final tw    = (math.sin(t * math.pi * 2 + dot.phase) + 1) * 0.5;
+      final tw = (math.sin(t * math.pi * 2 + dot.phase) + 1) * 0.5;
       final alpha = (0.03 + tw * 0.08).clamp(0.0, 1.0);
       p.color = accent.withValues(alpha: alpha);
       canvas.drawCircle(
-          Offset(dot.x * size.width, dot.y * size.height), dot.r + tw * 2, p);
+        Offset(dot.x * size.width, dot.y * size.height),
+        dot.r + tw * 2,
+        p,
+      );
     }
   }
 
@@ -1271,18 +1586,22 @@ class _FogPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = Colors.white.withValues(alpha: 0.03)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
+    final p =
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.03)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
     final rng = math.Random(77);
     for (int i = 0; i < 6; i++) {
-      final baseX  = rng.nextDouble() * size.width;
-      final drift  = math.sin(t * math.pi * 2 + i * 1.3) * 40;
-      final y      = size.height * (0.78 + rng.nextDouble() * 0.18);
-      final w      = 120.0 + rng.nextDouble() * 100;
+      final baseX = rng.nextDouble() * size.width;
+      final drift = math.sin(t * math.pi * 2 + i * 1.3) * 40;
+      final y = size.height * (0.78 + rng.nextDouble() * 0.18);
+      final w = 120.0 + rng.nextDouble() * 100;
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(baseX + drift, y),
-            width: w, height: 30 + rng.nextDouble() * 20),
+        Rect.fromCenter(
+          center: Offset(baseX + drift, y),
+          width: w,
+          height: 30 + rng.nextDouble() * 20,
+        ),
         p,
       );
     }
@@ -1303,11 +1622,17 @@ class _ShimmerPainter extends CustomPainter {
     final cx = (t * (size.width + 120)) - 60;
     canvas.drawRect(
       Offset.zero & size,
-      Paint()..shader = ui.Gradient.linear(
-        Offset(cx - 60, 0), Offset(cx + 60, 0),
-        [Colors.transparent, accent.withValues(alpha: 0.3), Colors.transparent],
-        [0.0, 0.5, 1.0],
-      ),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(cx - 60, 0),
+          Offset(cx + 60, 0),
+          [
+            Colors.transparent,
+            accent.withValues(alpha: 0.3),
+            Colors.transparent,
+          ],
+          [0.0, 0.5, 1.0],
+        ),
     );
   }
 
@@ -1318,31 +1643,47 @@ class _ShimmerPainter extends CustomPainter {
 class _BellPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final cx   = size.width / 2;
-    final body = Path()
-      ..moveTo(cx - 12, 20)
-      ..lineTo(cx - 28, size.height - 10)
-      ..quadraticBezierTo(cx, size.height + 5, cx + 28, size.height - 10)
-      ..lineTo(cx + 12, 20)
-      ..close();
+    final cx = size.width / 2;
+    final body =
+        Path()
+          ..moveTo(cx - 12, 20)
+          ..lineTo(cx - 28, size.height - 10)
+          ..quadraticBezierTo(cx, size.height + 5, cx + 28, size.height - 10)
+          ..lineTo(cx + 12, 20)
+          ..close();
 
-    canvas.drawPath(body, Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(cx - 20, 0), Offset(cx + 20, 0),
-        [_P.brassDk, _P.brassLt, _P.brass, _P.brassDk], [0, 0.3, 0.7, 1],
-      ));
+    canvas.drawPath(
+      body,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(cx - 20, 0),
+          Offset(cx + 20, 0),
+          [_P.brassDk, _P.brassLt, _P.brass, _P.brassDk],
+          [0, 0.3, 0.7, 1],
+        ),
+    );
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-          Rect.fromCenter(center: Offset(cx, 18), width: 28, height: 10),
-          const Radius.circular(5)),
+        Rect.fromCenter(center: Offset(cx, 18), width: 28, height: 10),
+        const Radius.circular(5),
+      ),
       Paint()..color = _P.brass,
     );
 
-    canvas.drawCircle(Offset(cx, size.height - 15), 5,
-        Paint()..color = _P.brassDk);
-    canvas.drawLine(Offset(cx, 0), Offset(cx, 14),
-        Paint()..color = _P.brass..strokeWidth = 3..strokeCap = StrokeCap.round);
+    canvas.drawCircle(
+      Offset(cx, size.height - 15),
+      5,
+      Paint()..color = _P.brassDk,
+    );
+    canvas.drawLine(
+      Offset(cx, 0),
+      Offset(cx, 14),
+      Paint()
+        ..color = _P.brass
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round,
+    );
   }
 
   @override
@@ -1358,35 +1699,55 @@ class _ClockPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final r  = size.width / 2 - 2;
+    final r = size.width / 2 - 2;
 
     canvas.drawCircle(Offset(cx, cy), r, Paint()..color = _P.panel);
-    canvas.drawCircle(Offset(cx, cy), r,
-        Paint()..style = PaintingStyle.stroke
-          ..color = _P.brass.withValues(alpha: 0.5)..strokeWidth = 2);
+    canvas.drawCircle(
+      Offset(cx, cy),
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color = _P.brass.withValues(alpha: 0.5)
+        ..strokeWidth = 2,
+    );
 
     for (int i = 0; i < 12; i++) {
       final angle = (i / 12) * math.pi * 2 - math.pi / 2;
       canvas.drawLine(
         Offset(cx + math.cos(angle) * (r - 4), cy + math.sin(angle) * (r - 4)),
         Offset(cx + math.cos(angle) * (r - 1), cy + math.sin(angle) * (r - 1)),
-        Paint()..color = _P.brass.withValues(alpha: 0.6)..strokeWidth = 1.5,
+        Paint()
+          ..color = _P.brass.withValues(alpha: 0.6)
+          ..strokeWidth = 1.5,
       );
     }
 
     final parts = time.split(':');
-    final h     = int.tryParse(parts[0]) ?? 12;
-    final m     = int.tryParse(parts[1]) ?? 0;
+    final h = int.tryParse(parts[0]) ?? 12;
+    final m = int.tryParse(parts[1]) ?? 0;
 
     final hAngle = ((h % 12) / 12 + m / 720) * math.pi * 2 - math.pi / 2;
-    canvas.drawLine(Offset(cx, cy),
-        Offset(cx + math.cos(hAngle) * r * 0.5, cy + math.sin(hAngle) * r * 0.5),
-        Paint()..color = _P.cream..strokeWidth = 2.5..strokeCap = StrokeCap.round);
+    canvas.drawLine(
+      Offset(cx, cy),
+      Offset(cx + math.cos(hAngle) * r * 0.5, cy + math.sin(hAngle) * r * 0.5),
+      Paint()
+        ..color = _P.cream
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round,
+    );
 
     final mAngle = (m / 60) * math.pi * 2 - math.pi / 2;
-    canvas.drawLine(Offset(cx, cy),
-        Offset(cx + math.cos(mAngle) * r * 0.72, cy + math.sin(mAngle) * r * 0.72),
-        Paint()..color = accent..strokeWidth = 1.5..strokeCap = StrokeCap.round);
+    canvas.drawLine(
+      Offset(cx, cy),
+      Offset(
+        cx + math.cos(mAngle) * r * 0.72,
+        cy + math.sin(mAngle) * r * 0.72,
+      ),
+      Paint()
+        ..color = accent
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round,
+    );
 
     canvas.drawCircle(Offset(cx, cy), 2.5, Paint()..color = _P.brass);
   }
@@ -1404,29 +1765,46 @@ class _GaugePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height;
-    final r  = size.width / 2 - 4;
+    final r = size.width / 2 - 4;
 
     canvas.drawArc(
       Rect.fromCircle(center: Offset(cx, cy), radius: r),
-      math.pi, math.pi, false,
-      Paint()..style = PaintingStyle.stroke
+      math.pi,
+      math.pi,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
         ..color = _P.t3.withValues(alpha: 0.3)
-        ..strokeWidth = 6..strokeCap = StrokeCap.round,
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round,
     );
 
     canvas.drawArc(
       Rect.fromCircle(center: Offset(cx, cy), radius: r),
-      math.pi, math.pi * value, false,
-      Paint()..style = PaintingStyle.stroke
-        ..color = value > 0.8 ? const Color(0xFFFF4444)
-            : value > 0.5 ? accent : _P.brass
-        ..strokeWidth = 6..strokeCap = StrokeCap.round,
+      math.pi,
+      math.pi * value,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color =
+            value > 0.8
+                ? const Color(0xFFFF4444)
+                : value > 0.5
+                ? accent
+                : _P.brass
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round,
     );
 
     final angle = math.pi + math.pi * value;
-    canvas.drawLine(Offset(cx, cy),
-        Offset(cx + math.cos(angle) * (r - 8), cy + math.sin(angle) * (r - 8)),
-        Paint()..color = _P.cream..strokeWidth = 2..strokeCap = StrokeCap.round);
+    canvas.drawLine(
+      Offset(cx, cy),
+      Offset(cx + math.cos(angle) * (r - 8), cy + math.sin(angle) * (r - 8)),
+      Paint()
+        ..color = _P.cream
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round,
+    );
 
     canvas.drawCircle(Offset(cx, cy), 4, Paint()..color = _P.brass);
   }
@@ -1438,7 +1816,10 @@ class _GaugePainter extends CustomPainter {
 class _DoorDetailPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = _P.brass.withValues(alpha: 0.15)..strokeWidth = 1.5;
+    final p =
+        Paint()
+          ..color = _P.brass.withValues(alpha: 0.15)
+          ..strokeWidth = 1.5;
     for (int i = 1; i < 4; i++) {
       final x = (size.width / 4) * i;
       canvas.drawLine(Offset(x, 8), Offset(x, size.height - 8), p);
@@ -1447,9 +1828,12 @@ class _DoorDetailPainter extends CustomPainter {
     for (int row = 0; row < 5; row++) {
       for (int col = 0; col < 3; col++) {
         canvas.drawCircle(
-          Offset((size.width / 4) * (col + 0.5),
-              16 + row * ((size.height - 32) / 4)),
-          2, rp,
+          Offset(
+            (size.width / 4) * (col + 0.5),
+            16 + row * ((size.height - 32) / 4),
+          ),
+          2,
+          rp,
         );
       }
     }
@@ -1469,13 +1853,13 @@ class _HeavySteamPainter extends CustomPainter {
     final p = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 25);
 
     for (int i = 0; i < 14; i++) {
-      final x       = size.width * (0.15 + rng.nextDouble() * 0.7);
-      final baseY   = size.height * 0.8;
-      final rise    = size.height * 0.7 * t;
-      final wobble  = math.sin(t * math.pi * 5 + i * 1.2) * 30;
-      final y       = baseY - rise + wobble;
+      final x = size.width * (0.15 + rng.nextDouble() * 0.7);
+      final baseY = size.height * 0.8;
+      final rise = size.height * 0.7 * t;
+      final wobble = math.sin(t * math.pi * 5 + i * 1.2) * 30;
+      final y = baseY - rise + wobble;
       final opacity = (1 - t * 0.7) * (0.15 + rng.nextDouble() * 0.25);
-      final radius  = 35 + rng.nextDouble() * 50 + t * 40;
+      final radius = 35 + rng.nextDouble() * 50 + t * 40;
 
       p.color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0));
       canvas.drawCircle(Offset(x, y), radius, p);
@@ -1483,8 +1867,10 @@ class _HeavySteamPainter extends CustomPainter {
 
     if (t > 0.7) {
       final fadeAlpha = ((t - 0.7) / 0.3).clamp(0.0, 1.0);
-      canvas.drawRect(Offset.zero & size,
-          Paint()..color = _P.ink.withValues(alpha: fadeAlpha * 0.8));
+      canvas.drawRect(
+        Offset.zero & size,
+        Paint()..color = _P.ink.withValues(alpha: fadeAlpha * 0.8),
+      );
     }
   }
 

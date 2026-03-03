@@ -3,9 +3,9 @@
 // Builds the app-wide ThemeData using colors from AppColors.
 //
 // FONTS:
-//   Headings → Playfair Display (elegant serif)
-//   Body     → Inter (clean, modern sans-serif)
-//   Mono     → Roboto Mono (ticket details, codes)
+//   Headings → Cinzel (royal, engraved brass plate feel)
+//   Body     → Raleway (ultra clean, modern luxury)
+//   Mono     → Space Mono (clean, retro-tech departure board)
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -35,17 +35,18 @@ class AppTheme {
       ),
 
       // ── Typography: Inter as the default body font ──
-      textTheme: GoogleFonts.interTextTheme(baseTextTheme),
+      textTheme: GoogleFonts.ralewayTextTheme(baseTextTheme),
 
       // ── App Bar ──
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.playfairDisplay(
+        titleTextStyle: GoogleFonts.cinzel(
           color: AppColors.amber,
           fontSize: 22,
           fontWeight: FontWeight.bold,
+          letterSpacing: 2.0,
         ),
         // White back/close icons
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
@@ -60,7 +61,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          textStyle: GoogleFonts.inter(
+          textStyle: GoogleFonts.raleway(
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -70,17 +71,19 @@ class AppTheme {
   }
 
   // ── Heading helper ──
-  /// Quick access to Playfair Display for headings.
+  /// Quick access to Cinzel for headings.
   /// Defaults: 28px, amber, bold.
   static TextStyle heading({
     double fontSize = 28,
     Color color = AppColors.amber,
     FontWeight fontWeight = FontWeight.bold,
+    double letterSpacing = 2.0,
   }) {
-    return GoogleFonts.playfairDisplay(
+    return GoogleFonts.cinzel(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
+      letterSpacing: letterSpacing,
     );
   }
 }

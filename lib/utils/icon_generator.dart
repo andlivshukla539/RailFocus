@@ -28,9 +28,7 @@ class IconGeneratorScreen extends StatelessWidget {
         child: Container(
           width: 512,
           height: 512,
-          decoration: const BoxDecoration(
-            color: Color(0xFF07090F),
-          ),
+          decoration: const BoxDecoration(color: Color(0xFF07090F)),
           child: CustomPaint(
             size: const Size(512, 512),
             painter: _IconPainter(),
@@ -60,20 +58,17 @@ class _IconPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 8
-        ..shader = ui.Gradient.sweep(
-          Offset(cx, cy),
-          [
-            const Color(0xFF8A6930),
-            const Color(0xFFD4A853),
-            const Color(0xFFF0CC7A),
-            const Color(0xFFD4A853),
-            const Color(0xFF8A6930),
-            const Color(0xFFD4A853),
-            const Color(0xFFF0CC7A),
-            const Color(0xFFD4A853),
-            const Color(0xFF8A6930),
-          ],
-        ),
+        ..shader = ui.Gradient.sweep(Offset(cx, cy), [
+          const Color(0xFF8A6930),
+          const Color(0xFFD4A853),
+          const Color(0xFFF0CC7A),
+          const Color(0xFFD4A853),
+          const Color(0xFF8A6930),
+          const Color(0xFFD4A853),
+          const Color(0xFFF0CC7A),
+          const Color(0xFFD4A853),
+          const Color(0xFF8A6930),
+        ]),
     );
 
     // ── Inner glow ring ────────────────────────────────────
@@ -91,14 +86,10 @@ class _IconPainter extends CustomPainter {
       Offset(cx, cy),
       size.width * 0.22,
       Paint()
-        ..shader = ui.Gradient.radial(
-          Offset(cx, cy),
-          size.width * 0.22,
-          [
-            const Color(0xFFD4A853).withValues(alpha: 0.15),
-            Colors.transparent,
-          ],
-        ),
+        ..shader = ui.Gradient.radial(Offset(cx, cy), size.width * 0.22, [
+          const Color(0xFFD4A853).withValues(alpha: 0.15),
+          Colors.transparent,
+        ]),
     );
 
     // ── Train icon (simplified locomotive silhouette) ──────
@@ -112,10 +103,7 @@ class _IconPainter extends CustomPainter {
       canvas.save();
       canvas.translate(dx, dy);
       canvas.rotate(math.pi / 4);
-      canvas.drawRect(
-        const Rect.fromLTWH(-5, -5, 10, 10),
-        diamondP,
-      );
+      canvas.drawRect(const Rect.fromLTWH(-5, -5, 10, 10), diamondP);
       canvas.restore();
     }
 
@@ -141,16 +129,17 @@ class _IconPainter extends CustomPainter {
   }
 
   void _drawTrain(Canvas canvas, double cx, double cy, double scale) {
-    final p = Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(cx - scale, cy - scale),
-        Offset(cx + scale, cy + scale),
-        [
-          const Color(0xFFF0CC7A),
-          const Color(0xFFD4A853),
-          const Color(0xFF8A6930),
-        ],
-      );
+    final p =
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(cx - scale, cy - scale),
+            Offset(cx + scale, cy + scale),
+            [
+              const Color(0xFFF0CC7A),
+              const Color(0xFFD4A853),
+              const Color(0xFF8A6930),
+            ],
+          );
 
     // Locomotive body (simplified front view)
     final bodyW = scale * 1.4;
@@ -213,20 +202,22 @@ class _IconPainter extends CustomPainter {
     );
 
     // Cowcatcher base
-    final cowPath = Path()
-      ..moveTo(cx - bodyW * 0.35, cy + bodyH * 0.5)
-      ..lineTo(cx - bodyW * 0.55, cy + bodyH * 0.65)
-      ..lineTo(cx + bodyW * 0.55, cy + bodyH * 0.65)
-      ..lineTo(cx + bodyW * 0.35, cy + bodyH * 0.5)
-      ..close();
+    final cowPath =
+        Path()
+          ..moveTo(cx - bodyW * 0.35, cy + bodyH * 0.5)
+          ..lineTo(cx - bodyW * 0.55, cy + bodyH * 0.65)
+          ..lineTo(cx + bodyW * 0.55, cy + bodyH * 0.65)
+          ..lineTo(cx + bodyW * 0.35, cy + bodyH * 0.5)
+          ..close();
     canvas.drawPath(cowPath, p);
 
     // Wheels (2)
     final wheelP = Paint()..color = const Color(0xFF07090F);
-    final rimP = Paint()
-      ..color = const Color(0xFFD4A853)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+    final rimP =
+        Paint()
+          ..color = const Color(0xFFD4A853)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3;
     for (final wx in [-0.35, 0.35]) {
       final wheelX = cx + bodyW * wx;
       final wheelY = cy + bodyH * 0.55;

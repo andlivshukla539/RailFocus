@@ -29,11 +29,11 @@ import 'notification_service.dart';
 
 class TimerService {
   // ── Prefs Keys ─────────────────────────────────────────────
-  static const String _keyEndEpoch  = 'session_end_epoch';
-  static const String _keyRoute     = 'session_route_name';
-  static const String _keyDuration  = 'session_duration_min';
-  static const String _keyStarted   = 'session_started';
-  static const String _keyPausedAt  = 'session_paused_at';
+  static const String _keyEndEpoch = 'session_end_epoch';
+  static const String _keyRoute = 'session_route_name';
+  static const String _keyDuration = 'session_duration_min';
+  static const String _keyStarted = 'session_started';
+  static const String _keyPausedAt = 'session_paused_at';
 
   // ── State ──────────────────────────────────────────────────
   DateTime? _endTime;
@@ -111,8 +111,10 @@ class TimerService {
       emoji: routeEmoji,
     );
 
-    debugPrint('⏱️ TimerService: Started $durationMinutes min session'
-        ' — ends at $_endTime');
+    debugPrint(
+      '⏱️ TimerService: Started $durationMinutes min session'
+      ' — ends at $_endTime',
+    );
   }
 
   // ══════════════════════════════════════════════════════════
@@ -160,7 +162,9 @@ class TimerService {
       routeName: _routeName,
     );
 
-    debugPrint('⏱️ TimerService: Resumed — ${getRemainingSeconds()}s remaining');
+    debugPrint(
+      '⏱️ TimerService: Resumed — ${getRemainingSeconds()}s remaining',
+    );
   }
 
   // ══════════════════════════════════════════════════════════

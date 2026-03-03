@@ -19,6 +19,7 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // AUDIO ASSET PATHS
@@ -30,35 +31,19 @@ class AudioAssets {
   AudioAssets._(); // Private constructor — can't instantiate
 
   // ── Ambient loops (long, looping background sounds) ────────
+  static const String sleepAmbient = 'sounds/Sleep.mp3';
   static const String trainAmbient = 'sounds/train_ambient.mp3';
-  static const String rainAmbient  = 'sounds/rain_ambient.mp3';
 
   // ── SFX (short, one-shot sounds) ───────────────────────────
-  static const String whistle      = 'sounds/whistle.mp3';
-  static const String ticketStamp  = 'sounds/ticket_stamp.mp3';
-  static const String arrivalBell  = 'sounds/arrival_bell.mp3';
-  static const String click        = 'sounds/click.mp3';
+  static const String whistle = 'sounds/whistle.mp3';
+  static const String ticketStamp = 'sounds/ticket_stamp.mp3';
+  static const String arrivalBell = 'sounds/arrival_bell.mp3';
+  static const String click = 'sounds/click.mp3';
 
   // ── Route-specific ambient mapping ─────────────────────────
-  // Returns the best ambient sound for each route's atmosphere.
-  // Falls back to the default train ambient if no match.
+  // User prefers Sleep.mp3 for all focus sessions.
   static String ambientForRoute(String routeId) {
-    switch (routeId) {
-      case 'scottish_highlands':
-      // Scotland gets rain on the window — moody and atmospheric.
-        return rainAmbient;
-
-      case 'norwegian_fjords':
-      // Norway also gets rain — fjord mist hitting the glass.
-        return rainAmbient;
-
-      case 'tokyo_kyoto':
-      case 'swiss_alps':
-      case 'darjeeling':
-      default:
-      // Default train interior ambiance for all other routes.
-        return trainAmbient;
-    }
+    return sleepAmbient;
   }
 }
 
@@ -95,15 +80,15 @@ class AudioService {
   // can play simultaneously without interrupting each other.
 
   late final AudioPlayer _ambientPlayer; // Loops: train sounds, rain
-  late final AudioPlayer _sfxPlayer;     // One-shots: whistle, bell, click
+  late final AudioPlayer _sfxPlayer; // One-shots: whistle, bell, click
 
   // ── State ──────────────────────────────────────────────────
 
-  bool _isMuted = false;        // Master mute toggle
-  double _ambientVolume = 0.5;  // Ambient volume (0.0 to 1.0)
-  double _sfxVolume = 0.8;      // SFX volume (louder than ambient)
+  bool _isMuted = false; // Master mute toggle
+  double _ambientVolume = 0.5; // Ambient volume (0.0 to 1.0)
+  double _sfxVolume = 0.8; // SFX volume (louder than ambient)
   bool _isAmbientPlaying = false;
-  Timer? _fadeTimer;             // Used for smooth fade in/out
+  Timer? _fadeTimer; // Used for smooth fade in/out
 
   // ── Getters ────────────────────────────────────────────────
   // Public read-only access to state. Screens can check these
@@ -273,8 +258,20 @@ class AudioService {
   /// 🔔 Arrival bell — session complete celebration.
   Future<void> playArrivalBell() => playSfx(AudioAssets.arrivalBell);
 
-  /// 🖱️ UI click — button taps for tactile feedback.
-  Future<void> playClick() => playSfx(AudioAssets.click);
+  /// 🖱️ UI click — uses Android/iOS native system sound.
+  /// No MP3 file needed! Works on all devices.
+  Future<void> playClick() async {
+    if (_isMuted) return;
+    SystemSound.play(SystemSoundType.click);
+  }
+
+  /// 🌟 Important click — system click + medium haptic for key moments.
+  /// Use for: booking confirm, session start, achievement unlock.
+  Future<void> playImportantClick() async {
+    if (_isMuted) return;
+    SystemSound.play(SystemSoundType.click);
+    HapticFeedback.mediumImpact();
+  }
 
   // ══════════════════════════════════════════════════════════
   // VOLUME CONTROLS
@@ -302,22 +299,26 @@ class AudioService {
   // ══════════════════════════════════════════════════════════
 
   /// Toggles mute on/off. Returns the new mute state.
-  /// When muted: ambient volume → 0, SFX blocked.
-  /// When unmuted: ambient volume restored, SFX allowed.
+  /// When muted: ambient paused, SFX blocked.
+  /// When unmuted: ambient resumed, SFX allowed.
   Future<bool> toggleMute() async {
     _isMuted = !_isMuted;
 
     if (_isMuted) {
-      // Muting — set ambient volume to 0 (but don't stop it,
-      // so we can unmute and it continues from the same position).
+      // Muting — pause the ambient player entirely
       if (_isAmbientPlaying) {
-        await _ambientPlayer.setVolume(0.0);
+        try {
+          await _ambientPlayer.pause();
+        } catch (_) {}
       }
       debugPrint('🔇 AudioService: MUTED');
     } else {
-      // Unmuting — restore ambient volume.
+      // Unmuting — resume ambient and restore volume
       if (_isAmbientPlaying) {
-        await _ambientPlayer.setVolume(_ambientVolume);
+        try {
+          await _ambientPlayer.setVolume(_ambientVolume);
+          await _ambientPlayer.resume();
+        } catch (_) {}
       }
       debugPrint('🔊 AudioService: UNMUTED');
     }
@@ -343,55 +344,54 @@ class AudioService {
   // smooth, cinematic volume transition.
 
   Future<void> _fadeToVolume(
-      AudioPlayer player,
-      double targetVolume, {
-        int duration = 1500, // Total fade duration in milliseconds
-      }) async {
+    AudioPlayer player,
+    double targetVolume, {
+    int duration = 1500, // Total fade duration in milliseconds
+  }) async {
     // Cancel any previous fade on this player.
     _fadeTimer?.cancel();
 
     // Get the current volume as our starting point.
     // We track ambient volume ourselves since audioplayers
     // doesn't expose a reliable getter on all platforms.
-    double currentVolume = player == _ambientPlayer
-        ? (await _ambientPlayer.getCurrentPosition() != null
-        ? _ambientVolume
-        : 0.0)
-        : _sfxVolume;
+    double currentVolume =
+        player == _ambientPlayer
+            ? (await _ambientPlayer.getCurrentPosition() != null
+                ? _ambientVolume
+                : 0.0)
+            : _sfxVolume;
 
     // Calculate how many steps and how much to change per step.
     const int stepMs = 50; // Update every 50 milliseconds
     final int steps = (duration / stepMs).round(); // Total number of steps
-    final double delta = (targetVolume - currentVolume) / steps; // Change per step
+    final double delta =
+        (targetVolume - currentVolume) / steps; // Change per step
 
     int currentStep = 0;
 
     // Completer lets us return a Future that resolves when the fade finishes.
     final completer = Completer<void>();
 
-    _fadeTimer = Timer.periodic(
-      const Duration(milliseconds: stepMs),
-          (timer) {
-        currentStep++;
-        currentVolume += delta;
+    _fadeTimer = Timer.periodic(const Duration(milliseconds: stepMs), (timer) {
+      currentStep++;
+      currentVolume += delta;
 
-        // Clamp to prevent overshoot (floating point arithmetic isn't perfect).
-        currentVolume = currentVolume.clamp(0.0, 1.0);
+      // Clamp to prevent overshoot (floating point arithmetic isn't perfect).
+      currentVolume = currentVolume.clamp(0.0, 1.0);
 
-        player.setVolume(currentVolume);
+      player.setVolume(currentVolume);
 
-        if (currentStep >= steps) {
-          // Fade complete — set exact target volume and stop the timer.
-          player.setVolume(targetVolume);
-          timer.cancel();
-          _fadeTimer = null;
+      if (currentStep >= steps) {
+        // Fade complete — set exact target volume and stop the timer.
+        player.setVolume(targetVolume);
+        timer.cancel();
+        _fadeTimer = null;
 
-          if (!completer.isCompleted) {
-            completer.complete();
-          }
+        if (!completer.isCompleted) {
+          completer.complete();
         }
-      },
-    );
+      }
+    });
 
     return completer.future;
   }

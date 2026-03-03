@@ -1,0 +1,1 @@
+Get-ChildItem -Filter *.dart -Recurse | Where-Object { $_ -notmatch '\\\.dart_tool' -and $_ -notmatch '\\\build' } | ForEach-Object { =Get-Content \$_ -Raw; if( -Match AppTheme\.darkTheme) { Write-Host \$_; \$c = -join \$c.Split([char]10) -replace 'colorScheme[\\s\\S]*?textTheme', 'textTheme'; [System.IO.File]::WriteAllText(\$_, \$c) } }

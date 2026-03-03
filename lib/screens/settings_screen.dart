@@ -17,25 +17,29 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/audio_service.dart';
+import '../services/auth_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 import '../services/wakelock_service.dart';
+import '../router/app_router.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // PALETTE
 // ═══════════════════════════════════════════════════════════════
 
 class _S {
-  static const ink     = Color(0xFF07090F);
-  static const panel   = Color(0xFF131620);
+  static const ink = Color(0xFF07090F);
+  static const panel = Color(0xFF131620);
   static const surface = Color(0xFF1A1E2C);
-  static const brass   = Color(0xFFD4A853);
+  static const brass = Color(0xFFD4A853);
   static const brassLt = Color(0xFFF0CC7A);
   static const brassDk = Color(0xFF8A6930);
-  static const cream   = Color(0xFFF5EDDB);
-  static const t2      = Color(0xFF9A8E78);
-  static const t3      = Color(0xFF564E40);
-  static const danger  = Color(0xFFB83838);
+  static const cream = Color(0xFFF5EDDB);
+  static const t2 = Color(0xFF9A8E78);
+  static const t3 = Color(0xFF564E40);
+  static const danger = Color(0xFFB83838);
   static const success = Color(0xFF4CAF50);
 }
 
@@ -52,19 +56,18 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen>
     with SingleTickerProviderStateMixin {
-
   final _audio = AudioService();
   final _storage = StorageService();
 
   // ── Settings State ─────────────────────────────────────────
   bool _notifsEnabled = true;
-  bool _dailyEnabled  = false;
-  int  _dailyHour     = 9;
-  int  _dailyMinute   = 0;
-  bool _wakelockOn    = true;
-  bool _soundMuted    = false;
-  double _ambientVol  = 0.5;
-  double _sfxVol      = 0.8;
+  bool _dailyEnabled = false;
+  int _dailyHour = 9;
+  int _dailyMinute = 0;
+  bool _wakelockOn = true;
+  bool _soundMuted = false;
+  double _ambientVol = 0.5;
+  double _sfxVol = 0.8;
 
   late final AnimationController _enterCtrl;
 
@@ -88,12 +91,12 @@ class _SettingsScreenState extends State<SettingsScreen>
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _notifsEnabled = prefs.getBool(NotifPrefs.enabled) ?? true;
-      _dailyEnabled  = prefs.getBool(NotifPrefs.dailyEnabled) ?? false;
-      _dailyHour     = prefs.getInt(NotifPrefs.dailyHour) ?? 9;
-      _dailyMinute   = prefs.getInt(NotifPrefs.dailyMinute) ?? 0;
-      _soundMuted    = _audio.isMuted;
-      _ambientVol    = _audio.ambientVolume;
-      _sfxVol        = _audio.sfxVolume;
+      _dailyEnabled = prefs.getBool(NotifPrefs.dailyEnabled) ?? false;
+      _dailyHour = prefs.getInt(NotifPrefs.dailyHour) ?? 9;
+      _dailyMinute = prefs.getInt(NotifPrefs.dailyMinute) ?? 0;
+      _soundMuted = _audio.isMuted;
+      _ambientVol = _audio.ambientVolume;
+      _sfxVol = _audio.sfxVolume;
     });
     _wakelockOn = await WakelockService.getPreference();
     if (mounted) setState(() {});
@@ -131,6 +134,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                       _buildDataSection(),
                       const SizedBox(height: 20),
                       _buildAboutSection(),
+                    const SizedBox(height: 20),
+                    _buildLogoutSection(),
                     ],
                   ),
                 ),
@@ -155,48 +160,55 @@ class _SettingsScreenState extends State<SettingsScreen>
               context.pop();
             },
             child: Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: _S.surface,
-                border: Border.all(
-                    color: _S.brass.withValues(alpha: 0.2)),
+                border: Border.all(color: _S.brass.withValues(alpha: 0.2)),
               ),
-              child: const Icon(Icons.arrow_back_rounded,
-                  color: _S.cream, size: 20),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: _S.cream,
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('SETTINGS',
-                  style: GoogleFonts.cormorant(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: _S.cream,
-                    letterSpacing: 3,
-                  )),
-              Text('CONTROL ROOM',
-                  style: GoogleFonts.cormorant(
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic,
-                    color: _S.t2,
-                    letterSpacing: 2,
-                  )),
+              Text(
+                'SETTINGS',
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: _S.cream,
+                  letterSpacing: 3,
+                ),
+              ),
+              Text(
+                'CONTROL ROOM',
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: _S.t2,
+                  letterSpacing: 2,
+                ),
+              ),
             ],
           ),
           const Spacer(),
           Container(
-            width: 44, height: 44,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
                 colors: [_S.brassLt, _S.brass, _S.brassDk],
               ),
             ),
-            child: const Icon(Icons.settings_rounded,
-                color: _S.ink, size: 20),
+            child: const Icon(Icons.settings_rounded, color: _S.ink, size: 20),
           ),
         ],
       ),
@@ -211,9 +223,8 @@ class _SettingsScreenState extends State<SettingsScreen>
       title: 'SOUND',
       children: [
         _ToggleTile(
-          icon: _soundMuted
-              ? Icons.volume_off_rounded
-              : Icons.volume_up_rounded,
+          icon:
+              _soundMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
           label: 'Master Audio',
           desc: _soundMuted ? 'All sounds muted' : 'Sounds enabled',
           value: !_soundMuted,
@@ -346,6 +357,20 @@ class _SettingsScreenState extends State<SettingsScreen>
       title: 'DATA',
       children: [
         _ActionTile(
+          icon: Icons.analytics_outlined,
+          label: 'View Analytics',
+          desc: 'Detailed stats and charts',
+          color: _S.brass,
+          onTap: () => context.push(AppRouter.stats),
+        ),
+        _ActionTile(
+          icon: Icons.download_rounded,
+          label: 'Export Data (CSV)',
+          desc: 'Download all session history',
+          color: _S.brass,
+          onTap: () => _exportCsv(),
+        ),
+        _ActionTile(
           icon: Icons.delete_outline_rounded,
           label: 'Clear Journey History',
           desc: 'Permanently delete all past sessions',
@@ -356,118 +381,181 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
+  Future<void> _exportCsv() async {
+    try {
+      HapticFeedback.lightImpact();
+      final csv = _storage.exportDataAsCsv();
+      if (csv.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'No data to export',
+                style: GoogleFonts.cormorantGaramond(color: _S.cream),
+              ),
+              backgroundColor: _S.panel,
+            ),
+          );
+        }
+        return;
+      }
+
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/railfocus_export.csv');
+      await file.writeAsString(csv);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Exported to ${file.path}',
+              style: GoogleFonts.cormorantGaramond(color: _S.cream),
+            ),
+            backgroundColor: _S.panel,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Export error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Export failed: $e',
+              style: GoogleFonts.cormorantGaramond(color: _S.cream),
+            ),
+            backgroundColor: _S.danger,
+          ),
+        );
+      }
+    }
+  }
+
   void _showClearDialog() {
     showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.85),
-      builder: (_) => Center(
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 28),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: _S.panel,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                  color: _S.danger.withValues(alpha: 0.3)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 60, height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _S.danger.withValues(alpha: 0.1),
-                  ),
-                  child: const Icon(Icons.warning_amber_rounded,
-                      color: _S.danger, size: 28),
+      builder:
+          (_) => Center(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 28),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: _S.panel,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: _S.danger.withValues(alpha: 0.3)),
                 ),
-                const SizedBox(height: 18),
-                Text('CLEAR ALL DATA?',
-                    style: GoogleFonts.cormorant(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: _S.cream,
-                      letterSpacing: 2,
-                    )),
-                const SizedBox(height: 10),
-                Text(
-                  'This will permanently delete all journey history, '
-                      'stats, and streaks. This cannot be undone.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cormorant(
-                    fontSize: 14,
-                    color: _S.t2,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          height: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            color: _S.surface,
-                          ),
-                          child: Center(
-                            child: Text('CANCEL',
-                                style: GoogleFonts.dmMono(
-                                  fontSize: 10,
-                                  color: _S.cream,
-                                  letterSpacing: 2,
-                                )),
-                          ),
-                        ),
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _S.danger.withValues(alpha: 0.1),
+                      ),
+                      child: const Icon(
+                        Icons.warning_amber_rounded,
+                        color: _S.danger,
+                        size: 28,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.heavyImpact();
-                          _storage.clearAll();
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(this.context).showSnackBar(
-                            SnackBar(
-                              content: Text('All journey data cleared',
-                                  style: GoogleFonts.cormorant(
+                    const SizedBox(height: 18),
+                    Text(
+                      'CLEAR ALL DATA?',
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: _S.cream,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'This will permanently delete all journey history, '
+                      'stats, and streaks. This cannot be undone.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: 14,
+                        color: _S.t2,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              height: 48,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14),
+                                color: _S.surface,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'CANCEL',
+                                  style: GoogleFonts.spaceMono(
+                                    fontSize: 10,
                                     color: _S.cream,
-                                  )),
-                              backgroundColor: _S.panel,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                              ),
                             ),
-                          );
-                          setState(() {});
-                        },
-                        child: Container(
-                          height: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            color: _S.danger,
-                          ),
-                          child: Center(
-                            child: Text('DELETE ALL',
-                                style: GoogleFonts.dmMono(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  letterSpacing: 2,
-                                )),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.heavyImpact();
+                              _storage.clearAll();
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'All journey data cleared',
+                                    style: GoogleFonts.cormorantGaramond(
+                                      color: _S.cream,
+                                    ),
+                                  ),
+                                  backgroundColor: _S.panel,
+                                ),
+                              );
+                              setState(() {});
+                            },
+                            child: Container(
+                              height: 48,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14),
+                                color: _S.danger,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'DELETE ALL',
+                                  style: GoogleFonts.spaceMono(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
     );
   }
 
@@ -483,6 +571,102 @@ class _SettingsScreenState extends State<SettingsScreen>
         _InfoTile(label: 'Theme', value: 'Luxe Rail — Obsidian & Gilt'),
         _InfoTile(label: 'Made with', value: '❤️ Flutter & Dart'),
       ],
+    );
+  }
+
+  Widget _buildLogoutSection() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 20),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: const Color(0xFF1A1A2E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Colors.red.withValues(alpha: 0.3),
+                ),
+              ),
+              title: Text(
+                'Sign Out',
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFF7E7CE),
+                ),
+              ),
+              content: Text(
+                'Are you sure you want to sign out?',
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 16,
+                  color: const Color(0xFFF7E7CE).withValues(alpha: 0.7),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.spaceMono(
+                      fontSize: 13,
+                      color: const Color(0xFFF7E7CE).withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await AuthService.instance.signOut();
+                    if (mounted) context.go(AppRouter.login);
+                  },
+                  child: Text(
+                    'Sign Out',
+                    style: GoogleFonts.spaceMono(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: Colors.red.withValues(alpha: 0.08),
+            border: Border.all(
+              color: Colors.red.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.logout_rounded,
+                color: Colors.redAccent.withValues(alpha: 0.8),
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'SIGN OUT',
+                style: GoogleFonts.spaceMono(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.redAccent.withValues(alpha: 0.8),
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -520,20 +704,19 @@ class _Section extends StatelessWidget {
               children: [
                 Icon(icon, color: _S.brass, size: 16),
                 const SizedBox(width: 10),
-                Text(title,
-                    style: GoogleFonts.dmMono(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _S.brass,
-                      letterSpacing: 2,
-                    )),
+                Text(
+                  title,
+                  style: GoogleFonts.spaceMono(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _S.brass,
+                    letterSpacing: 2,
+                  ),
+                ),
               ],
             ),
           ),
-          Container(
-            height: 1,
-            color: _S.brass.withValues(alpha: 0.08),
-          ),
+          Container(height: 1, color: _S.brass.withValues(alpha: 0.08)),
           // Children
           ...children,
         ],
@@ -567,32 +750,34 @@ class _ToggleTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       child: Row(
         children: [
-          Icon(icon,
-              color: value ? _S.brass : _S.t3,
-              size: 20),
+          Icon(icon, color: value ? _S.brass : _S.t3, size: 20),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: GoogleFonts.cormorant(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: _S.cream,
-                    )),
-                Text(desc,
-                    style: GoogleFonts.cormorant(
-                      fontSize: 12,
-                      color: _S.t2,
-                    )),
+                Text(
+                  label,
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: _S.cream,
+                  ),
+                ),
+                Text(
+                  desc,
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 12,
+                    color: _S.t2,
+                  ),
+                ),
               ],
             ),
           ),
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: _S.brass,
+            activeThumbColor: _S.brass,
             activeTrackColor: _S.brass.withValues(alpha: 0.3),
             inactiveThumbColor: _S.t3,
             inactiveTrackColor: _S.surface,
@@ -630,11 +815,13 @@ class _SliderTile extends StatelessWidget {
           const SizedBox(width: 14),
           SizedBox(
             width: 80,
-            child: Text(label,
-                style: GoogleFonts.cormorant(
-                  fontSize: 13,
-                  color: _S.cream,
-                )),
+            child: Text(
+              label,
+              style: GoogleFonts.cormorantGaramond(
+                fontSize: 13,
+                color: _S.cream,
+              ),
+            ),
           ),
           Expanded(
             child: SliderTheme(
@@ -642,8 +829,7 @@ class _SliderTile extends StatelessWidget {
                 activeTrackColor: _S.brass,
                 inactiveTrackColor: _S.surface,
                 thumbColor: _S.cream,
-                thumbShape:
-                const RoundSliderThumbShape(enabledThumbRadius: 6),
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                 overlayShape: SliderComponentShape.noOverlay,
                 trackHeight: 3,
               ),
@@ -660,10 +846,7 @@ class _SliderTile extends StatelessWidget {
             child: Text(
               '${(value * 100).round()}%',
               textAlign: TextAlign.right,
-              style: GoogleFonts.dmMono(
-                fontSize: 10,
-                color: _S.t2,
-              ),
+              style: GoogleFonts.spaceMono(fontSize: 10, color: _S.t2),
             ),
           ),
         ],
@@ -695,8 +878,7 @@ class _TimeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
     final period = hour >= 12 ? 'PM' : 'AM';
-    final timeStr =
-        '$displayHour:${minute.toString().padLeft(2, '0')} $period';
+    final timeStr = '$displayHour:${minute.toString().padLeft(2, '0')} $period';
 
     return GestureDetector(
       onTap: () async {
@@ -728,28 +910,30 @@ class _TimeTile extends StatelessWidget {
             Icon(icon, color: _S.brass, size: 20),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(label,
-                  style: GoogleFonts.cormorant(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: _S.cream,
-                  )),
+              child: Text(
+                label,
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: _S.cream,
+                ),
+              ),
             ),
             Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: _S.surface,
                 borderRadius: BorderRadius.circular(10),
-                border:
-                Border.all(color: _S.brass.withValues(alpha: 0.2)),
+                border: Border.all(color: _S.brass.withValues(alpha: 0.2)),
               ),
-              child: Text(timeStr,
-                  style: GoogleFonts.dmMono(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: _S.brass,
-                  )),
+              child: Text(
+                timeStr,
+                style: GoogleFonts.spaceMono(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: _S.brass,
+                ),
+              ),
             ),
           ],
         ),
@@ -791,17 +975,21 @@ class _ActionTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
-                      style: GoogleFonts.cormorant(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      )),
-                  Text(desc,
-                      style: GoogleFonts.cormorant(
-                        fontSize: 12,
-                        color: _S.t2,
-                      )),
+                  Text(
+                    label,
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                  Text(
+                    desc,
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 12,
+                      color: _S.t2,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -830,18 +1018,19 @@ class _InfoTile extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(label,
-                style: GoogleFonts.cormorant(
-                  fontSize: 14,
-                  color: _S.t2,
-                )),
+            child: Text(
+              label,
+              style: GoogleFonts.cormorantGaramond(fontSize: 14, color: _S.t2),
+            ),
           ),
-          Text(value,
-              style: GoogleFonts.cormorant(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: _S.cream,
-              )),
+          Text(
+            value,
+            style: GoogleFonts.cormorantGaramond(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: _S.cream,
+            ),
+          ),
         ],
       ),
     );

@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 /// Mixin for any screen that needs lifecycle awareness.
 /// Add to your State class: `with AppLifecycleAware`
 mixin AppLifecycleAware<T extends StatefulWidget> on State<T> {
-
   late final AppLifecycleListener _lifecycleListener;
 
   bool _isInBackground = false;

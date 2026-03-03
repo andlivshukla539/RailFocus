@@ -46,103 +46,95 @@ class StatCard extends StatelessWidget {
     final color = accentColor ?? AppColors.amber;
 
     return Container(
-      // Internal padding — breathing room for the content
-      padding: const EdgeInsets.all(20),
+          // Internal padding — breathing room for the content
+          padding: const EdgeInsets.all(20),
 
-      decoration: BoxDecoration(
-        // Card background
-        color: AppColors.card,
+          decoration: BoxDecoration(
+            // Card background
+            color: AppColors.card,
 
-        // Rounded corners
-        borderRadius: BorderRadius.circular(16),
+            // Rounded corners
+            borderRadius: BorderRadius.circular(16),
 
-        // Border with a subtle amber tint
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+            // Border with a subtle amber tint
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
 
-        // A very subtle glow behind the card using a box shadow
-        // This gives it the "lit from within" premium feel
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-
-      child: Column(
-        // Align content to the left edge of the card
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          // ── Top Row: emoji + label ────────────────────────────
-          Row(
-            children: [
-              // The emoji icon
-              Text(
-                emoji,
-                style: const TextStyle(fontSize: 20),
-              ),
-              const SizedBox(width: 8),
-
-              // Uppercase label text
-              Text(
-                label.toUpperCase(),
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: color.withValues(alpha: 0.8),
-                  letterSpacing: 1.2,
-                ),
+            // A very subtle glow behind the card using a box shadow
+            // This gives it the "lit from within" premium feel
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
-
-          // ── Value Row: number + unit ───────────────────────────
-          Row(
-            // Align the value and unit to the baseline
-            // so they line up correctly despite different font sizes
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+          child: Column(
+            // Align content to the left edge of the card
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Top Row: emoji + label ────────────────────────────
+              Row(
+                children: [
+                  // The emoji icon
+                  Text(emoji, style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: 8),
 
-              // The large primary number
-              Text(
-                value,
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  height: 1.0,    // Tight line height for the big number
-                ),
+                  // Uppercase label text
+                  Text(
+                    label.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: color.withValues(alpha: 0.8),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
               ),
 
-              const SizedBox(width: 6),
+              const SizedBox(height: 16),
 
-              // The unit label next to the number
-              Text(
-                unit,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+              // ── Value Row: number + unit ───────────────────────────
+              Row(
+                // Align the value and unit to the baseline
+                // so they line up correctly despite different font sizes
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  // The large primary number
+                  Text(
+                    value,
+                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      height: 1.0, // Tight line height for the big number
+                    ),
+                  ),
+
+                  const SizedBox(width: 6),
+
+                  // The unit label next to the number
+                  Text(
+                    unit,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-    )
-    // Animate the card entrance using flutter_animate.
-    // .animate() creates an animation controller automatically.
-    // .fadeIn() + .slideY() chain to create a fade-up entrance.
+        )
+        // Animate the card entrance using flutter_animate.
+        // .animate() creates an animation controller automatically.
+        // .fadeIn() + .slideY() chain to create a fade-up entrance.
         .animate(delay: animationDelay)
         .fadeIn(duration: 600.ms, curve: Curves.easeOut)
         .slideY(
-      begin: 0.15,   // Start 15% below final position
-      end: 0,        // End at final position
-      duration: 600.ms,
-      curve: Curves.easeOutCubic,
-    );
+          begin: 0.15, // Start 15% below final position
+          end: 0, // End at final position
+          duration: 600.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }

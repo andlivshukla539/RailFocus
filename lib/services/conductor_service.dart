@@ -154,7 +154,7 @@ class ConductorService {
       'The scenic route through ${context.routeName} awaits.',
       '$duration of quiet country lies ahead.',
       'The track ahead promises undisturbed passage.',
-      '',  // Sometimes no middle line is more elegant
+      '', // Sometimes no middle line is more elegant
     ]);
   }
 
@@ -265,6 +265,5 @@ class ConductorService {
     final nonEmpty = options.where((s) => s.isNotEmpty).toList();
     if (nonEmpty.isEmpty) return '';
     return nonEmpty[_random.nextInt(nonEmpty.length)];
-
   }
 }

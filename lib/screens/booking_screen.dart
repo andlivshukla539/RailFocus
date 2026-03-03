@@ -63,10 +63,10 @@
 // ═══════════════════════════════════════════════════════════════
 
 import 'dart:math' as math;
-import 'dart:ui'   as ui;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';   // FIX BUG 3
+import 'package:flutter/scheduler.dart'; // FIX BUG 3
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -80,20 +80,20 @@ import '../services/audio_service.dart';
 // ═══════════════════════════════════════════════════════════════
 
 abstract class _C {
-  static const bg            = Color(0xFF06070B);
-  static const surface       = Color(0xFF0D0F18);
-  static const card          = Color(0xFF131620);
-  static const elevated      = Color(0xFF191C28);
-  static const gold          = Color(0xFFD4A853);
-  static const goldLight     = Color(0xFFEFCC78);
-  static const goldDark      = Color(0xFF9A7A3A);
-  static const cream         = Color(0xFFF5EDDB);
+  static const bg = Color(0xFF06070B);
+  static const surface = Color(0xFF0D0F18);
+  static const card = Color(0xFF131620);
+  static const elevated = Color(0xFF191C28);
+  static const gold = Color(0xFFD4A853);
+  static const goldLight = Color(0xFFEFCC78);
+  static const goldDark = Color(0xFF9A7A3A);
+  static const cream = Color(0xFFF5EDDB);
   static const textSecondary = Color(0xFF9A8E7A);
-  static const textTertiary  = Color(0xFF564E40);
-  static const paper         = Color(0xFFF6EFE0);
-  static const ink           = Color(0xFF1A1208);
+  static const textTertiary = Color(0xFF564E40);
+  static const paper = Color(0xFFF6EFE0);
+  static const ink = Color(0xFF1A1208);
   // FIX BUG 2: const replacement for Colors.red.shade400 (non-const getter)
-  static const danger        = Color(0xFFEF5350);
+  static const danger = Color(0xFFEF5350);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -144,7 +144,6 @@ class BookingScreen extends StatefulWidget {
 
 class _BookingScreenState extends State<BookingScreen>
     with TickerProviderStateMixin {
-
   final _pageCtrl = PageController();
 
   /// 12-s breath — drives star twinkle + dual radial glow.
@@ -153,11 +152,11 @@ class _BookingScreenState extends State<BookingScreen>
   /// 2.8-s shimmer loop — drives selected-border pulse steps 1–2.
   late final AnimationController _shimCtrl;
 
-  int             _step  = 0;
-  static const    _total = 5;
-  RouteModel?     _route;
-  MoodOption?     _mood;
-  String          _goal  = '';
+  int _step = 0;
+  static const _total = 5;
+  RouteModel? _route;
+  MoodOption? _mood;
+  String _goal = '';
   DurationOption? _dur;
 
   @override
@@ -167,12 +166,12 @@ class _BookingScreenState extends State<BookingScreen>
     SchedulerBinding.instance.scheduleWarmUpFrame();
 
     _bgCtrl = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(seconds: 12),
     )..repeat(reverse: true);
 
     _shimCtrl = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(milliseconds: 2800),
     )..repeat(reverse: true);
   }
@@ -186,17 +185,16 @@ class _BookingScreenState extends State<BookingScreen>
   }
 
   void _nav(int dir) {
-    AudioService().playClick();
     HapticFeedback.mediumImpact();
     if (dir > 0 && _step < _total - 1) {
       _pageCtrl.nextPage(
         duration: const Duration(milliseconds: 420),
-        curve:    Curves.easeInOutCubic,
+        curve: Curves.easeInOutCubic,
       );
     } else if (dir < 0 && _step > 0) {
       _pageCtrl.previousPage(
         duration: const Duration(milliseconds: 420),
-        curve:    Curves.easeInOutCubic,
+        curve: Curves.easeInOutCubic,
       );
     } else if (dir < 0) {
       context.pop();
@@ -205,25 +203,32 @@ class _BookingScreenState extends State<BookingScreen>
 
   bool get _canProceed => switch (_step) {
     0 => _route != null,
-    1 => _mood  != null,
+    1 => _mood != null,
     2 => _goal.trim().isNotEmpty,
-    3 => _dur   != null,
+    3 => _dur != null,
     _ => true,
   };
 
   Color get _accent => _route?.accentColor ?? _C.gold;
 
   void _confirm() {
-    if (_route == null || _dur == null) { return; }
+    if (_route == null || _dur == null) {
+      return;
+    }
+    AudioService().playImportantClick();
     AudioService().playTicketStamp();
     HapticFeedback.heavyImpact();
-    context.push(AppRouter.boarding, extra: {
-      'route': _route,
-      'mood': _mood?.label,
-      'goal': _goal,
-      'durationMinutes': _dur!.minutes,
-    });
+    context.push(
+      AppRouter.boarding,
+      extra: {
+        'route': _route,
+        'mood': _mood?.label,
+        'goal': _goal,
+        'durationMinutes': _dur!.minutes,
+      },
+    );
   }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -244,16 +249,16 @@ class _BookingScreenState extends State<BookingScreen>
               child: Column(
                 children: [
                   _Header(
-                    step:     _step,
-                    total:    _total,
-                    accent:   _accent,
+                    step: _step,
+                    total: _total,
+                    accent: _accent,
                     shimCtrl: _shimCtrl,
-                    onBack:   () => _nav(-1),
+                    onBack: () => _nav(-1),
                   ),
                   Expanded(
                     child: PageView(
-                      controller:    _pageCtrl,
-                      physics:       const NeverScrollableScrollPhysics(),
+                      controller: _pageCtrl,
+                      physics: const NeverScrollableScrollPhysics(),
                       onPageChanged: (i) => setState(() => _step = i),
                       children: [
                         _RouteStep(
@@ -263,26 +268,26 @@ class _BookingScreenState extends State<BookingScreen>
                         ),
                         _MoodStep(
                           selected: _mood,
-                          accent:   _accent,
+                          accent: _accent,
                           shimCtrl: _shimCtrl,
                           onSelect: (m) => setState(() => _mood = m),
                         ),
                         _GoalStep(
-                          goal:     _goal,
-                          accent:   _accent,
+                          goal: _goal,
+                          accent: _accent,
                           onChange: (g) => setState(() => _goal = g),
                         ),
                         _DurationStep(
                           selected: _dur,
-                          accent:   _accent,
+                          accent: _accent,
                           onSelect: (d) => setState(() => _dur = d),
                         ),
                         _BoardingStep(
-                          route:     _route,
-                          mood:      _mood,
-                          goal:      _goal,
-                          dur:       _dur,
-                          vsync:     this,
+                          route: _route,
+                          mood: _mood,
+                          goal: _goal,
+                          dur: _dur,
+                          vsync: this,
                           onConfirm: _confirm,
                         ),
                       ],
@@ -291,8 +296,8 @@ class _BookingScreenState extends State<BookingScreen>
                   if (_step < _total - 1)
                     _ContinueBtn(
                       enabled: _canProceed,
-                      accent:  _accent,
-                      onTap:   () => _nav(1),
+                      accent: _accent,
+                      onTap: () => _nav(1),
                     ),
                 ],
               ),
@@ -310,21 +315,21 @@ class _BookingScreenState extends State<BookingScreen>
 
 class _AnimBg extends StatelessWidget {
   final AnimationController ctrl;
-  final Color               accent;
+  final Color accent;
   const _AnimBg({required this.ctrl, required this.accent});
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: ctrl,
-    builder:   (_, __) => CustomPaint(
-      painter: _BgPainter(t: ctrl.value, accent: accent),
-    ),
+    builder:
+        (_, __) =>
+            CustomPaint(painter: _BgPainter(t: ctrl.value, accent: accent)),
   );
 }
 
 class _BgPainter extends CustomPainter {
   final double t;
-  final Color  accent;
+  final Color accent;
   const _BgPainter({required this.t, required this.accent});
 
   @override
@@ -333,44 +338,50 @@ class _BgPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, Paint()..color = _C.bg);
 
     // Top accent radial glow — breathes with t
-    canvas.drawRect(Offset.zero & size,
-        Paint()..shader = ui.Gradient.radial(
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = ui.Gradient.radial(
           Offset(size.width * 0.5, size.height * 0.15),
           size.width * 0.88,
           [accent.withValues(alpha: 0.03 + t * 0.05), Colors.transparent],
-        ));
+        ),
+    );
 
     // Bottom warm gold glow
-    canvas.drawRect(Offset.zero & size,
-        Paint()..shader = ui.Gradient.radial(
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = ui.Gradient.radial(
           Offset(size.width * 0.5, size.height),
           size.width * 0.70,
           [_C.gold.withValues(alpha: 0.013 + t * 0.016), Colors.transparent],
-        ));
+        ),
+    );
 
     // Stars — pre-baked positions, zero alloc per frame
     final sp = Paint();
     for (final s in _kStars) {
       final tw = (math.sin(t * math.pi * 2 * s.speed + s.phase) + 1) * 0.5;
       sp.color = Colors.white.withValues(
-          alpha: (0.04 + tw * 0.22).clamp(0.0, 1.0));
-      canvas.drawCircle(
-          Offset(s.x * size.width, s.y * size.height), s.r, sp);
+        alpha: (0.04 + tw * 0.22).clamp(0.0, 1.0),
+      );
+      canvas.drawCircle(Offset(s.x * size.width, s.y * size.height), s.r, sp);
     }
 
     // Shooting star — fires twice per 12-s cycle
     final st = (t * 2.0) % 1.0;
     if (st > 0.72) {
-      final p  = (st - 0.72) / 0.28;
-      final sx = size.width  * 0.12 + p * size.width  * 0.55;
+      final p = (st - 0.72) / 0.28;
+      final sx = size.width * 0.12 + p * size.width * 0.55;
       final sy = size.height * 0.07 + p * size.height * 0.11;
       canvas.drawLine(
         Offset(sx, sy),
         Offset(sx - 32 * p, sy - 12 * p),
         Paint()
-          ..color       = Colors.white.withValues(alpha: (1 - p) * 0.55)
+          ..color = Colors.white.withValues(alpha: (1 - p) * 0.55)
           ..strokeWidth = 1.2
-          ..style       = PaintingStyle.stroke,
+          ..style = PaintingStyle.stroke,
       );
     }
   }
@@ -384,19 +395,24 @@ class _BgPainter extends CustomPainter {
 // ═══════════════════════════════════════════════════════════════
 
 class _Header extends StatelessWidget {
-  final int    step, total;
-  final Color  accent;
+  final int step, total;
+  final Color accent;
   final AnimationController shimCtrl;
-  final VoidCallback        onBack;
+  final VoidCallback onBack;
 
   static const _titles = [
-    'SELECT ROUTE', 'SET MOOD', 'YOUR MISSION',
-    'CHOOSE DURATION', 'BOARDING PASS',
+    'SELECT ROUTE',
+    'SET MOOD',
+    'YOUR MISSION',
+    'CHOOSE DURATION',
+    'BOARDING PASS',
   ];
 
   const _Header({
-    required this.step,     required this.total,
-    required this.accent,   required this.shimCtrl,
+    required this.step,
+    required this.total,
+    required this.accent,
+    required this.shimCtrl,
     required this.onBack,
   });
 
@@ -412,15 +428,20 @@ class _Header extends StatelessWidget {
               _Pressable(
                 onTap: onBack,
                 child: Container(
-                  width: 42, height: 42,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(13),
-                    color:  _C.surface,
+                    color: _C.surface,
                     border: Border.all(
-                        color: _C.textTertiary.withValues(alpha: 0.20)),
+                      color: _C.textTertiary.withValues(alpha: 0.20),
+                    ),
                   ),
-                  child: const Icon(Icons.chevron_left_rounded,
-                      color: _C.textSecondary, size: 22),
+                  child: const Icon(
+                    Icons.chevron_left_rounded,
+                    color: _C.textSecondary,
+                    size: 22,
+                  ),
                 ),
               ),
               const Spacer(),
@@ -429,17 +450,24 @@ class _Header extends StatelessWidget {
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (child, anim) {
                   final slide = Tween<Offset>(
-                    begin: const Offset(0, 0.2), end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                      parent: anim, curve: Curves.easeOutCubic));
-                  return FadeTransition(opacity: anim,
-                      child: SlideTransition(position: slide, child: child));
+                    begin: const Offset(0, 0.2),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+                  );
+                  return FadeTransition(
+                    opacity: anim,
+                    child: SlideTransition(position: slide, child: child),
+                  );
                 },
-                child: Text(_titles[step],
-                  key:   ValueKey(step),
-                  style: GoogleFonts.cormorant(
-                    fontSize: 13, fontWeight: FontWeight.w600,
-                    color: _C.textSecondary, letterSpacing: 3,
+                child: Text(
+                  _titles[step],
+                  key: ValueKey(step),
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _C.textSecondary,
+                    letterSpacing: 3,
                   ),
                 ),
               ),
@@ -447,19 +475,30 @@ class _Header extends StatelessWidget {
               // Step pill with shimmer border
               AnimatedBuilder(
                 animation: shimCtrl,
-                builder: (_, __) => Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: accent.withValues(
-                        alpha: 0.16 + shimCtrl.value * 0.20)),
-                    color: accent.withValues(alpha: 0.055),
-                  ),
-                  child: Text('${step + 1} / $total',
-                      style: GoogleFonts.dmMono(
-                          fontSize: 11, color: accent, letterSpacing: 0.5)),
-                ),
+                builder:
+                    (_, __) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: accent.withValues(
+                            alpha: 0.16 + shimCtrl.value * 0.20,
+                          ),
+                        ),
+                        color: accent.withValues(alpha: 0.055),
+                      ),
+                      child: Text(
+                        '${step + 1} / $total',
+                        style: GoogleFonts.spaceMono(
+                          fontSize: 11,
+                          color: accent,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
               ),
             ],
           ),
@@ -467,64 +506,77 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Progress rail
-          LayoutBuilder(builder: (_, box) {
-            final pct = (step + 1) / total;
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Track
-                Container(
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: _C.textTertiary.withValues(alpha: 0.13),
-                    borderRadius: BorderRadius.circular(2),
+          LayoutBuilder(
+            builder: (_, box) {
+              final pct = (step + 1) / total;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Track
+                  Container(
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: _C.textTertiary.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                // Fill
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 450),
-                  curve:    Curves.easeInOutCubic,
-                  height:   3,
-                  width:    box.maxWidth * pct,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    gradient: LinearGradient(colors: [
-                      accent, accent.withValues(alpha: 0.50)]),
-                    boxShadow: [BoxShadow(
-                        color: accent.withValues(alpha: 0.62),
-                        blurRadius: 10)],
-                  ),
-                ),
-                // Spring-overshoot dots
-                Positioned(
-                  top: -4, left: 0, right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(total, (i) {
-                      final done = i <= step;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 360),
-                        curve:    Curves.easeOutBack,
-                        width:  done ? 12 : 6,
-                        height: done ? 12 : 6,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: done
-                              ? accent
-                              : _C.textTertiary.withValues(alpha: 0.25),
-                          boxShadow: done
-                              ? [BoxShadow(
-                              color:      accent.withValues(alpha: 0.70),
-                              blurRadius: 10)]
-                              : null,
+                  // Fill
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 450),
+                    curve: Curves.easeInOutCubic,
+                    height: 3,
+                    width: box.maxWidth * pct,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      gradient: LinearGradient(
+                        colors: [accent, accent.withValues(alpha: 0.50)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accent.withValues(alpha: 0.62),
+                          blurRadius: 10,
                         ),
-                      );
-                    }),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            );
-          }),
+                  // Spring-overshoot dots
+                  Positioned(
+                    top: -4,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(total, (i) {
+                        final done = i <= step;
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 360),
+                          curve: Curves.easeOutBack,
+                          width: done ? 12 : 6,
+                          height: done ? 12 : 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color:
+                                done
+                                    ? accent
+                                    : _C.textTertiary.withValues(alpha: 0.25),
+                            boxShadow:
+                                done
+                                    ? [
+                                      BoxShadow(
+                                        color: accent.withValues(alpha: 0.70),
+                                        blurRadius: 10,
+                                      ),
+                                    ]
+                                    : null,
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
 
           const SizedBox(height: 26),
         ],
@@ -538,12 +590,14 @@ class _Header extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════
 
 class _ContinueBtn extends StatefulWidget {
-  final bool         enabled;
-  final Color        accent;
+  final bool enabled;
+  final Color accent;
   final VoidCallback onTap;
 
   const _ContinueBtn({
-    required this.enabled, required this.accent, required this.onTap,
+    required this.enabled,
+    required this.accent,
+    required this.onTap,
   });
 
   @override
@@ -558,51 +612,76 @@ class _ContinueBtnState extends State<_ContinueBtn>
   void initState() {
     super.initState();
     _press = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 95));
+      vsync: this,
+      duration: const Duration(milliseconds: 95),
+    );
   }
 
   @override
-  void dispose() { _press.dispose(); super.dispose(); }
+  void dispose() {
+    _press.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 30),
       child: GestureDetector(
-        onTapDown:   (_) { if (widget.enabled) { _press.forward(); } },
-        onTapUp:     (_) { _press.reverse();
-        if (widget.enabled) { widget.onTap(); } },
-        onTapCancel: () { _press.reverse(); },
+        onTapDown: (_) {
+          if (widget.enabled) {
+            _press.forward();
+          }
+        },
+        onTapUp: (_) {
+          _press.reverse();
+          if (widget.enabled) {
+            widget.onTap();
+          }
+        },
+        onTapCancel: () {
+          _press.reverse();
+        },
         child: AnimatedBuilder(
           animation: _press,
           // FIX BUG 1+4: explicit Transform + 3-arg scale via extension
-          builder: (_, child) => Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity().xy(1.0 - _press.value * 0.035),
-            child: child,
-          ),
+          builder:
+              (_, child) => Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity().xy(1.0 - _press.value * 0.035),
+                child: child,
+              ),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             height: 60,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              color:  widget.enabled ? widget.accent : _C.elevated,
-              border: Border.all(color: widget.enabled
-                  ? widget.accent
-                  : _C.textTertiary.withValues(alpha: 0.18)),
-              boxShadow: widget.enabled
-                  ? [BoxShadow(
-                  color:      widget.accent.withValues(alpha: 0.40),
-                  blurRadius: 28, offset: const Offset(0, 9))]
-                  : null,
+              color: widget.enabled ? widget.accent : _C.elevated,
+              border: Border.all(
+                color:
+                    widget.enabled
+                        ? widget.accent
+                        : _C.textTertiary.withValues(alpha: 0.18),
+              ),
+              boxShadow:
+                  widget.enabled
+                      ? [
+                        BoxShadow(
+                          color: widget.accent.withValues(alpha: 0.40),
+                          blurRadius: 28,
+                          offset: const Offset(0, 9),
+                        ),
+                      ]
+                      : null,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 220),
-                  style: GoogleFonts.dmMono(
-                    fontSize: 13, fontWeight: FontWeight.w700,
+                  style: GoogleFonts.spaceMono(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 3,
                     color: widget.enabled ? _C.bg : _C.textTertiary,
                   ),
@@ -610,10 +689,13 @@ class _ContinueBtnState extends State<_ContinueBtn>
                 ),
                 const SizedBox(width: 10),
                 AnimatedOpacity(
-                  opacity:  widget.enabled ? 1.0 : 0.30,
+                  opacity: widget.enabled ? 1.0 : 0.30,
                   duration: const Duration(milliseconds: 220),
-                  child: Icon(Icons.arrow_forward_rounded, size: 18,
-                      color: widget.enabled ? _C.bg : _C.textTertiary),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: widget.enabled ? _C.bg : _C.textTertiary,
+                  ),
                 ),
               ],
             ),
@@ -639,23 +721,29 @@ class _StepTitle extends StatefulWidget {
 class _StepTitleState extends State<_StepTitle>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
-  late final Animation<double>   _fade;
-  late final Animation<Offset>   _slide;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 480));
-    _fade  = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+      vsync: this,
+      duration: const Duration(milliseconds: 480),
+    );
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
     _slide = Tween<Offset>(
-        begin: const Offset(-0.06, 0), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+      begin: const Offset(-0.06, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _ctrl.forward();
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -668,13 +756,25 @@ class _StepTitleState extends State<_StepTitle>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.pre, style: GoogleFonts.cormorant(
-                  fontSize: 14, color: _C.textSecondary,
-                  fontStyle: FontStyle.italic, letterSpacing: 0.8)),
+              Text(
+                widget.pre,
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 14,
+                  color: _C.textSecondary,
+                  fontStyle: FontStyle.italic,
+                  letterSpacing: 0.8,
+                ),
+              ),
               const SizedBox(height: 3),
-              Text(widget.title, style: GoogleFonts.cormorant(
-                  fontSize: 38, fontWeight: FontWeight.w700,
-                  color: _C.cream, height: 1.0)),
+              Text(
+                widget.title,
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 38,
+                  fontWeight: FontWeight.w700,
+                  color: _C.cream,
+                  height: 1.0,
+                ),
+              ),
             ],
           ),
         ),
@@ -688,12 +788,14 @@ class _StepTitleState extends State<_StepTitle>
 // ═══════════════════════════════════════════════════════════════
 
 class _RouteStep extends StatefulWidget {
-  final RouteModel?               selected;
-  final AnimationController       shimCtrl;
+  final RouteModel? selected;
+  final AnimationController shimCtrl;
   final void Function(RouteModel) onSelect;
 
   const _RouteStep({
-    required this.selected, required this.shimCtrl, required this.onSelect,
+    required this.selected,
+    required this.shimCtrl,
+    required this.onSelect,
   });
 
   @override
@@ -704,11 +806,16 @@ class _RouteStepState extends State<_RouteStep> {
   late final PageController _inner;
 
   @override
-  void initState() { super.initState();
-  _inner = PageController(viewportFraction: 0.84); }
+  void initState() {
+    super.initState();
+    _inner = PageController(viewportFraction: 0.84);
+  }
 
   @override
-  void dispose() { _inner.dispose(); super.dispose(); }
+  void dispose() {
+    _inner.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -720,17 +827,19 @@ class _RouteStepState extends State<_RouteStep> {
         Expanded(
           child: PageView.builder(
             controller: _inner,
-            itemCount:  routes.length,
+            itemCount: routes.length,
             physics: const BouncingScrollPhysics(
-                decelerationRate: ScrollDecelerationRate.fast),
+              decelerationRate: ScrollDecelerationRate.fast,
+            ),
             onPageChanged: (_) => HapticFeedback.selectionClick(),
             itemBuilder: (_, i) {
-              final r   = routes[i];
+              final r = routes[i];
               final sel = widget.selected?.id == r.id;
               return _RouteCard(
-                route: r, sel: sel, shimCtrl: widget.shimCtrl,
+                route: r,
+                sel: sel,
+                shimCtrl: widget.shimCtrl,
                 onTap: () {
-                  AudioService().playClick();
                   widget.onSelect(r);
                   HapticFeedback.mediumImpact();
                 },
@@ -745,14 +854,16 @@ class _RouteStepState extends State<_RouteStep> {
 }
 
 class _RouteCard extends StatefulWidget {
-  final RouteModel          route;
-  final bool                sel;
+  final RouteModel route;
+  final bool sel;
   final AnimationController shimCtrl;
-  final VoidCallback        onTap;
+  final VoidCallback onTap;
 
   const _RouteCard({
-    required this.route, required this.sel,
-    required this.shimCtrl, required this.onTap,
+    required this.route,
+    required this.sel,
+    required this.shimCtrl,
+    required this.onTap,
   });
 
   @override
@@ -765,154 +876,274 @@ class _RouteCardState extends State<_RouteCard>
   double _tx = 0, _ty = 0;
 
   @override
-  void initState() { super.initState();
-  _press = AnimationController(vsync: this,
-      duration: const Duration(milliseconds: 95)); }
+  void initState() {
+    super.initState();
+    _press = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 95),
+    );
+  }
 
   @override
-  void dispose() { _press.dispose(); super.dispose(); }
+  void dispose() {
+    _press.dispose();
+    super.dispose();
+  }
 
   void _onPan(DragUpdateDetails d, BoxConstraints b) => setState(() {
-    _ty =  ((d.localPosition.dx / b.maxWidth)  - 0.5) * 7.0;
+    _ty = ((d.localPosition.dx / b.maxWidth) - 0.5) * 7.0;
     _tx = -((d.localPosition.dy / b.maxHeight) - 0.5) * 4.5;
   });
 
-  void _resetTilt() => setState(() { _tx = 0; _ty = 0; });
+  void _resetTilt() => setState(() {
+    _tx = 0;
+    _ty = 0;
+  });
 
   @override
   Widget build(BuildContext context) {
     final r = widget.route;
     final sel = widget.sel;
 
-    return LayoutBuilder(builder: (_, box) {
-      return GestureDetector(
-        onTapDown:   (_) { _press.forward(); },
-        onTapUp:     (_) { _press.reverse(); widget.onTap(); },
-        onTapCancel: () { _press.reverse(); },
-        onPanUpdate: (d) { _onPan(d, box); },
-        onPanEnd:    (_) { _resetTilt(); },
-        child: AnimatedBuilder(
-          animation: _press,
-          // FIX BUG 1+4: 3-arg scale in cascade
-          builder: (_, child) => Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001)
-              ..rotateX(_tx * math.pi / 180)
-              ..rotateY(_ty * math.pi / 180)
-              ..scale(1.0 - _press.value * 0.025,
-                  1.0 - _press.value * 0.025, 1.0),
-            child: child,
-          ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            margin: EdgeInsets.symmetric(
-                horizontal: 8, vertical: sel ? 5 : 20),
-            child: AnimatedBuilder(
-              animation: widget.shimCtrl,
-              builder: (_, child) => DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: sel
-                        ? r.accentColor.withValues(
-                        alpha: 0.42 + widget.shimCtrl.value * 0.36)
-                        : _C.textTertiary.withValues(alpha: 0.13),
-                    width: sel ? 2 : 1,
-                  ),
-                  boxShadow: [
-                    if (sel)
-                      BoxShadow(
-                          color: r.accentColor.withValues(
-                              alpha: 0.14 + widget.shimCtrl.value * 0.12),
-                          blurRadius: 36, spreadRadius: -4,
-                          offset: const Offset(0, 10))
-                    else
-                      BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.44),
-                          blurRadius: 24, offset: const Offset(0, 8)),
-                  ],
+    return LayoutBuilder(
+      builder: (_, box) {
+        return GestureDetector(
+          onTapDown: (_) {
+            _press.forward();
+          },
+          onTapUp: (_) {
+            _press.reverse();
+            widget.onTap();
+          },
+          onTapCancel: () {
+            _press.reverse();
+          },
+          onPanUpdate: (d) {
+            _onPan(d, box);
+          },
+          onPanEnd: (_) {
+            _resetTilt();
+          },
+          child: AnimatedBuilder(
+            animation: _press,
+            // FIX BUG 1+4: 3-arg scale in cascade
+            builder:
+                (_, child) => Transform(
+                  alignment: Alignment.center,
+                  transform:
+                      Matrix4.identity()
+                        ..setEntry(3, 2, 0.001)
+                        ..rotateX(_tx * math.pi / 180)
+                        ..rotateY(_ty * math.pi / 180)
+                        ..scale(
+                          1.0 - _press.value * 0.025,
+                          1.0 - _press.value * 0.025,
+                          1.0,
+                        ),
+                  child: child,
                 ),
-                child: child,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: sel ? 5 : 20,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: Stack(fit: StackFit.expand, children: [
-                  // Sky — static
-                  RepaintBoundary(child: DecoratedBox(
-                      decoration: BoxDecoration(gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end:   Alignment.bottomCenter,
-                          colors: r.skyGradient)))),
-                  // Atmosphere tint — static
-                  RepaintBoundary(child: CustomPaint(painter: _AtmosPainter(
-                      accent: r.accentColor, seed: r.id.hashCode))),
-                  // Landscape silhouette — static
-                  Positioned(bottom: 0, left: 0, right: 0,
-                      child: RepaintBoundary(child: SizedBox(height: 140,
-                          child: CustomPaint(painter: _LandscapePainter(
-                              colors: r.landscapeGradient,
-                              seed:   r.id.hashCode))))),
-                  // Scrim
-                  Positioned.fill(child: IgnorePointer(child: DecoratedBox(
-                      decoration: BoxDecoration(gradient: LinearGradient(
-                          begin:  Alignment.topCenter,
-                          end:    Alignment.bottomCenter,
-                          stops:  const [0.28, 1.0],
-                          colors: [Colors.transparent,
-                            Colors.black.withValues(alpha: 0.88)]))))),
-                  // Route info
-                  Positioned(left: 22, right: 22, bottom: 26,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(r.emoji,
-                              style: const TextStyle(fontSize: 38)),
-                          const SizedBox(height: 10),
-                          Text(r.name.toUpperCase(),
-                              style: GoogleFonts.cormorant(
-                                  fontSize: 24, fontWeight: FontWeight.w700,
-                                  color: Colors.white, letterSpacing: 1)),
-                          const SizedBox(height: 4),
-                          Text(r.tagline, style: GoogleFonts.cormorant(
-                              fontSize: 14, fontStyle: FontStyle.italic,
-                              color: Colors.white.withValues(alpha: 0.70))),
+              child: AnimatedBuilder(
+                animation: widget.shimCtrl,
+                builder:
+                    (_, child) => DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color:
+                              sel
+                                  ? r.accentColor.withValues(
+                                    alpha: 0.42 + widget.shimCtrl.value * 0.36,
+                                  )
+                                  : _C.textTertiary.withValues(alpha: 0.13),
+                          width: sel ? 2 : 1,
+                        ),
+                        boxShadow: [
+                          if (sel)
+                            BoxShadow(
+                              color: r.accentColor.withValues(
+                                alpha: 0.14 + widget.shimCtrl.value * 0.12,
+                              ),
+                              blurRadius: 36,
+                              spreadRadius: -4,
+                              offset: const Offset(0, 10),
+                            )
+                          else
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.44),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
                         ],
-                      )),
-                  // Selected badge
-                  if (sel) Positioned(top: 16, right: 16,
-                      child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                      ),
+                      child: child,
+                    ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Sky — static
+                      RepaintBoundary(
+                        child: DecoratedBox(
                           decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: r.skyGradient,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Atmosphere tint — static
+                      RepaintBoundary(
+                        child: CustomPaint(
+                          painter: _AtmosPainter(
+                            accent: r.accentColor,
+                            seed: r.id.hashCode,
+                          ),
+                        ),
+                      ),
+                      // Landscape silhouette — static
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: RepaintBoundary(
+                          child: SizedBox(
+                            height: 140,
+                            child: CustomPaint(
+                              painter: _LandscapePainter(
+                                colors: r.landscapeGradient,
+                                seed: r.id.hashCode,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Scrim
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                stops: const [0.28, 1.0],
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.88),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Route info
+                      Positioned(
+                        left: 22,
+                        right: 22,
+                        bottom: 26,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(r.emoji, style: const TextStyle(fontSize: 38)),
+                            const SizedBox(height: 10),
+                            Text(
+                              r.name.toUpperCase(),
+                              style: GoogleFonts.cormorantGaramond(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              r.tagline,
+                              style: GoogleFonts.cormorantGaramond(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.white.withValues(alpha: 0.70),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Selected badge
+                      if (sel)
+                        Positioned(
+                          top: 16,
+                          right: 16,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
                               color: r.accentColor,
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [BoxShadow(
-                                  color:      r.accentColor.withValues(alpha: 0.52),
-                                  blurRadius: 14)]),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.check_rounded,
-                                color: Colors.white, size: 12),
-                            const SizedBox(width: 4),
-                            Text('SELECTED', style: GoogleFonts.dmMono(
-                                fontSize: 9, fontWeight: FontWeight.w700,
-                                color: Colors.white, letterSpacing: 1.5)),
-                          ]))),
-                  // Glass sheen
-                  Positioned.fill(child: IgnorePointer(child: DecoratedBox(
-                      decoration: BoxDecoration(gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end:   const Alignment(0.4, 0.4),
-                          colors: [Colors.white.withValues(alpha: 0.07),
-                            Colors.transparent]))))),
-                ]),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: r.accentColor.withValues(alpha: 0.52),
+                                  blurRadius: 14,
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'SELECTED',
+                                  style: GoogleFonts.spaceMono(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      // Glass sheen
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: const Alignment(0.4, 0.4),
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.07),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -921,14 +1152,16 @@ class _RouteCardState extends State<_RouteCard>
 // ═══════════════════════════════════════════════════════════════
 
 class _MoodStep extends StatelessWidget {
-  final MoodOption?               selected;
-  final Color                     accent;
-  final AnimationController       shimCtrl;
+  final MoodOption? selected;
+  final Color accent;
+  final AnimationController shimCtrl;
   final void Function(MoodOption) onSelect;
 
   const _MoodStep({
-    required this.selected, required this.accent,
-    required this.shimCtrl, required this.onSelect,
+    required this.selected,
+    required this.accent,
+    required this.shimCtrl,
+    required this.onSelect,
   });
 
   @override
@@ -942,21 +1175,27 @@ class _MoodStep extends StatelessWidget {
           child: GridView.builder(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             physics: const BouncingScrollPhysics(
-                decelerationRate: ScrollDecelerationRate.fast),
+              decelerationRate: ScrollDecelerationRate.fast,
+            ),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, mainAxisSpacing: 12,
-                crossAxisSpacing: 12, childAspectRatio: 1.0),
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.0,
+            ),
             itemCount: moods.length,
             itemBuilder: (_, i) {
               final m = moods[i];
               final sel = selected?.id == m.id;
               return _MoodTile(
-                  mood: m, sel: sel, shimCtrl: shimCtrl,
-                  onTap: () {
-                    AudioService().playClick();
-                    HapticFeedback.selectionClick();
-                    onSelect(m);
-                  });
+                mood: m,
+                sel: sel,
+                shimCtrl: shimCtrl,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onSelect(m);
+                },
+              );
             },
           ),
         ),
@@ -966,14 +1205,16 @@ class _MoodStep extends StatelessWidget {
 }
 
 class _MoodTile extends StatefulWidget {
-  final MoodOption          mood;
-  final bool                sel;
+  final MoodOption mood;
+  final bool sel;
   final AnimationController shimCtrl;
-  final VoidCallback        onTap;
+  final VoidCallback onTap;
 
   const _MoodTile({
-    required this.mood, required this.sel,
-    required this.shimCtrl, required this.onTap,
+    required this.mood,
+    required this.sel,
+    required this.shimCtrl,
+    required this.onTap,
   });
 
   @override
@@ -985,12 +1226,19 @@ class _MoodTileState extends State<_MoodTile>
   late final AnimationController _press;
 
   @override
-  void initState() { super.initState();
-  _press = AnimationController(vsync: this,
-      duration: const Duration(milliseconds: 95)); }
+  void initState() {
+    super.initState();
+    _press = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 95),
+    );
+  }
 
   @override
-  void dispose() { _press.dispose(); super.dispose(); }
+  void dispose() {
+    _press.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -998,66 +1246,100 @@ class _MoodTileState extends State<_MoodTile>
     final sel = widget.sel;
 
     return GestureDetector(
-      onTapDown:   (_) { _press.forward(); },
-      onTapUp:     (_) { _press.reverse(); widget.onTap(); },
-      onTapCancel: () { _press.reverse(); },
+      onTapDown: (_) {
+        _press.forward();
+      },
+      onTapUp: (_) {
+        _press.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () {
+        _press.reverse();
+      },
       child: AnimatedBuilder(
         animation: _press,
         // FIX BUG 1+4: explicit Transform + extension .xy()
-        builder: (_, child) => Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity().xy(1.0 - _press.value * 0.05),
-          child: child,
-        ),
+        builder:
+            (_, child) => Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity().xy(1.0 - _press.value * 0.05),
+              child: child,
+            ),
         child: AnimatedBuilder(
           animation: widget.shimCtrl,
-          builder: (_, child) => AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: sel ? m.color.withValues(alpha: 0.10) : _C.card,
-              border: Border.all(
-                  color: sel
-                      ? m.color.withValues(
-                      alpha: 0.40 + widget.shimCtrl.value * 0.35)
-                      : _C.textTertiary.withValues(alpha: 0.11),
-                  width: sel ? 2 : 1),
-              boxShadow: sel
-                  ? [BoxShadow(color: m.color.withValues(alpha: 0.14),
-                  blurRadius: 22, offset: const Offset(0, 6))]
-                  : null,
-            ),
-            child: child,
-          ),
+          builder:
+              (_, child) => AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: sel ? m.color.withValues(alpha: 0.10) : _C.card,
+                  border: Border.all(
+                    color:
+                        sel
+                            ? m.color.withValues(
+                              alpha: 0.40 + widget.shimCtrl.value * 0.35,
+                            )
+                            : _C.textTertiary.withValues(alpha: 0.11),
+                    width: sel ? 2 : 1,
+                  ),
+                  boxShadow:
+                      sel
+                          ? [
+                            BoxShadow(
+                              color: m.color.withValues(alpha: 0.14),
+                              blurRadius: 22,
+                              offset: const Offset(0, 6),
+                            ),
+                          ]
+                          : null,
+                ),
+                child: child,
+              ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutBack,
-                  width: sel ? 64 : 52, height: sel ? 64 : 52,
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: sel
-                          ? m.color.withValues(alpha: 0.16)
-                          : _C.elevated),
-                  child: Center(child: Text(m.emoji,
-                      style: TextStyle(fontSize: sel ? 31 : 26)))),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutBack,
+                width: sel ? 64 : 52,
+                height: sel ? 64 : 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: sel ? m.color.withValues(alpha: 0.16) : _C.elevated,
+                ),
+                child: Center(
+                  child: Text(
+                    m.emoji,
+                    style: TextStyle(fontSize: sel ? 31 : 26),
+                  ),
+                ),
+              ),
               const SizedBox(height: 12),
-              Text(m.label, style: GoogleFonts.cormorant(
-                  fontSize: 15, fontWeight: FontWeight.w700,
+              Text(
+                m.label,
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                   color: sel ? m.color : _C.textSecondary,
-                  letterSpacing: 0.5)),
+                  letterSpacing: 0.5,
+                ),
+              ),
               const SizedBox(height: 3),
               Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(m.description, style: GoogleFonts.cormorant(
-                      fontSize: 11, fontStyle: FontStyle.italic,
-                      color: sel
-                          ? m.color.withValues(alpha: 0.70)
-                          : _C.textTertiary),
-                      textAlign: TextAlign.center,
-                      maxLines: 2, overflow: TextOverflow.ellipsis)),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  m.description,
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color:
+                        sel ? m.color.withValues(alpha: 0.70) : _C.textTertiary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),
@@ -1071,12 +1353,14 @@ class _MoodTileState extends State<_MoodTile>
 // ═══════════════════════════════════════════════════════════════
 
 class _GoalStep extends StatefulWidget {
-  final String               goal;
-  final Color                accent;
+  final String goal;
+  final Color accent;
   final void Function(String) onChange;
 
   const _GoalStep({
-    required this.goal, required this.accent, required this.onChange,
+    required this.goal,
+    required this.accent,
+    required this.onChange,
   });
 
   @override
@@ -1085,25 +1369,36 @@ class _GoalStep extends StatefulWidget {
 
 class _GoalStepState extends State<_GoalStep> {
   late final TextEditingController _ctrl;
-  late final FocusNode             _focus;
+  late final FocusNode _focus;
   static const _maxLen = 120;
 
   static const _chips = [
-    'Finish project', 'Deep work', 'Study & learn',
-    'Creative flow',  'Write something', 'Plan & organise',
+    'Finish project',
+    'Deep work',
+    'Study & learn',
+    'Creative flow',
+    'Write something',
+    'Plan & organise',
   ];
 
   @override
   void initState() {
     super.initState();
-    _ctrl  = TextEditingController(text: widget.goal);
+    _ctrl = TextEditingController(text: widget.goal);
     _focus = FocusNode();
-    Future.delayed(const Duration(milliseconds: 650),
-            () { if (mounted) { _focus.requestFocus(); } });
+    Future.delayed(const Duration(milliseconds: 650), () {
+      if (mounted) {
+        _focus.requestFocus();
+      }
+    });
   }
 
   @override
-  void dispose() { _ctrl.dispose(); _focus.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1126,80 +1421,121 @@ class _GoalStepState extends State<_GoalStep> {
               borderRadius: BorderRadius.circular(20),
               color: _C.surface,
               border: Border.all(
-                  color: hasText
-                      ? widget.accent.withValues(alpha: 0.38)
-                      : _C.textTertiary.withValues(alpha: 0.14),
-                  width: hasText ? 2 : 1),
-              boxShadow: hasText
-                  ? [BoxShadow(color: widget.accent.withValues(alpha: 0.07),
-                  blurRadius: 22)]
-                  : null,
+                color:
+                    hasText
+                        ? widget.accent.withValues(alpha: 0.38)
+                        : _C.textTertiary.withValues(alpha: 0.14),
+                width: hasText ? 2 : 1,
+              ),
+              boxShadow:
+                  hasText
+                      ? [
+                        BoxShadow(
+                          color: widget.accent.withValues(alpha: 0.07),
+                          blurRadius: 22,
+                        ),
+                      ]
+                      : null,
             ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(children: [
-                    Container(
-                        width: 34, height: 34,
+                  Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: widget.accent.withValues(alpha: 0.10)),
-                        child: Icon(Icons.edit_rounded,
-                            color: widget.accent.withValues(alpha: 0.65),
-                            size: 17)),
-                    const Spacer(),
-                    // FIX BUG 2: _C.danger replaces Colors.red.shade400
-                    SizedBox(width: 26, height: 26,
-                        child: CustomPaint(painter: _ArcPainter(
-                          pct:   charPct,
-                          color: charPct > 0.85 ? _C.danger : widget.accent,
-                        ))),
-                  ]),
+                          borderRadius: BorderRadius.circular(10),
+                          color: widget.accent.withValues(alpha: 0.10),
+                        ),
+                        child: Icon(
+                          Icons.edit_rounded,
+                          color: widget.accent.withValues(alpha: 0.65),
+                          size: 17,
+                        ),
+                      ),
+                      const Spacer(),
+                      // FIX BUG 2: _C.danger replaces Colors.red.shade400
+                      SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: CustomPaint(
+                          painter: _ArcPainter(
+                            pct: charPct,
+                            color: charPct > 0.85 ? _C.danger : widget.accent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
-                  Expanded(child: TextField(
-                    controller: _ctrl, focusNode: _focus,
-                    onChanged: (v) {
-                      widget.onChange(v);
-                      setState(() {});
-                    },
-                    maxLines: null, maxLength: _maxLen,
-                    style: GoogleFonts.cormorant(
-                        fontSize: 22, height: 1.52,
-                        color: _C.cream, fontStyle: FontStyle.italic),
-                    cursorColor: widget.accent,
-                    decoration: InputDecoration(
+                  Expanded(
+                    child: TextField(
+                      controller: _ctrl,
+                      focusNode: _focus,
+                      onChanged: (v) {
+                        widget.onChange(v);
+                        setState(() {});
+                      },
+                      maxLines: null,
+                      maxLength: _maxLen,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: 22,
+                        height: 1.52,
+                        color: _C.cream,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      cursorColor: widget.accent,
+                      decoration: InputDecoration(
                         hintText: 'What will you create today?',
-                        hintStyle: GoogleFonts.cormorant(
-                            fontSize: 22, height: 1.52,
-                            color: _C.textTertiary,
-                            fontStyle: FontStyle.italic),
+                        hintStyle: GoogleFonts.cormorantGaramond(
+                          fontSize: 22,
+                          height: 1.52,
+                          color: _C.textTertiary,
+                          fontStyle: FontStyle.italic,
+                        ),
                         border: InputBorder.none,
-                        counterText: ''),
-                  )),
+                        counterText: '',
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
 
           const SizedBox(height: 26),
-          Text('QUICK INTENTIONS', style: GoogleFonts.dmMono(
-              fontSize: 10, color: _C.textTertiary, letterSpacing: 2)),
+          Text(
+            'QUICK INTENTIONS',
+            style: GoogleFonts.spaceMono(
+              fontSize: 10,
+              color: _C.textTertiary,
+              letterSpacing: 2,
+            ),
+          ),
           const SizedBox(height: 12),
 
           Wrap(
-            spacing: 10, runSpacing: 10,
-            children: _chips.map((text) => _GoalChip(
-              text: text, accent: widget.accent,
-              onTap: () {
-                AudioService().playClick();
-                HapticFeedback.lightImpact();
-                _ctrl.text = text;
-                widget.onChange(text);
-                setState(() {});
-              },
-            )).toList(),
+            spacing: 10,
+            runSpacing: 10,
+            children:
+                _chips
+                    .map(
+                      (text) => _GoalChip(
+                        text: text,
+                        accent: widget.accent,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _ctrl.text = text;
+                          widget.onChange(text);
+                          setState(() {});
+                        },
+                      ),
+                    )
+                    .toList(),
           ),
         ],
       ),
@@ -1208,12 +1544,14 @@ class _GoalStepState extends State<_GoalStep> {
 }
 
 class _GoalChip extends StatefulWidget {
-  final String     text;
-  final Color      accent;
+  final String text;
+  final Color accent;
   final VoidCallback onTap;
 
   const _GoalChip({
-    required this.text, required this.accent, required this.onTap,
+    required this.text,
+    required this.accent,
+    required this.onTap,
   });
 
   @override
@@ -1225,43 +1563,69 @@ class _GoalChipState extends State<_GoalChip>
   late final AnimationController _press;
 
   @override
-  void initState() { super.initState();
-  _press = AnimationController(vsync: this,
-      duration: const Duration(milliseconds: 95)); }
+  void initState() {
+    super.initState();
+    _press = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 95),
+    );
+  }
 
   @override
-  void dispose() { _press.dispose(); super.dispose(); }
+  void dispose() {
+    _press.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown:   (_) { _press.forward(); },
-      onTapUp:     (_) { _press.reverse(); widget.onTap(); },
-      onTapCancel: () { _press.reverse(); },
+      onTapDown: (_) {
+        _press.forward();
+      },
+      onTapUp: (_) {
+        _press.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () {
+        _press.reverse();
+      },
       child: AnimatedBuilder(
         animation: _press,
         // FIX BUG 1+4: explicit Transform + extension .xy()
-        builder: (_, __) => Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity().xy(1.0 - _press.value * 0.06),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 100),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: _press.value > 0.5
-                  ? widget.accent.withValues(alpha: 0.12)
-                  : _C.card,
-              border: Border.all(color: _press.value > 0.5
-                  ? widget.accent.withValues(alpha: 0.40)
-                  : _C.textTertiary.withValues(alpha: 0.11)),
+        builder:
+            (_, __) => Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity().xy(1.0 - _press.value * 0.06),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 100),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color:
+                      _press.value > 0.5
+                          ? widget.accent.withValues(alpha: 0.12)
+                          : _C.card,
+                  border: Border.all(
+                    color:
+                        _press.value > 0.5
+                            ? widget.accent.withValues(alpha: 0.40)
+                            : _C.textTertiary.withValues(alpha: 0.11),
+                  ),
+                ),
+                child: Text(
+                  widget.text,
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    color: _C.textSecondary,
+                  ),
+                ),
+              ),
             ),
-            child: Text(widget.text, style: GoogleFonts.cormorant(
-                fontSize: 14, fontStyle: FontStyle.italic,
-                color: _C.textSecondary)),
-          ),
-        ),
       ),
     );
   }
@@ -1272,12 +1636,14 @@ class _GoalChipState extends State<_GoalChip>
 // ═══════════════════════════════════════════════════════════════
 
 class _DurationStep extends StatelessWidget {
-  final DurationOption?               selected;
-  final Color                         accent;
+  final DurationOption? selected;
+  final Color accent;
   final void Function(DurationOption) onSelect;
 
   const _DurationStep({
-    required this.selected, required this.accent, required this.onSelect,
+    required this.selected,
+    required this.accent,
+    required this.onSelect,
   });
 
   @override
@@ -1291,18 +1657,21 @@ class _DurationStep extends StatelessWidget {
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             physics: const BouncingScrollPhysics(
-                decelerationRate: ScrollDecelerationRate.fast),
+              decelerationRate: ScrollDecelerationRate.fast,
+            ),
             itemCount: durs.length,
             itemBuilder: (_, i) {
-              final d   = durs[i];
+              final d = durs[i];
               final sel = selected?.minutes == d.minutes;
               return _DurTile(
-                  dur: d, sel: sel, accent: accent,
-                  onTap: () {
-                    AudioService().playClick();
-                    HapticFeedback.selectionClick();
-                    onSelect(d);
-                  });
+                dur: d,
+                sel: sel,
+                accent: accent,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onSelect(d);
+                },
+              );
             },
           ),
         ),
@@ -1313,13 +1682,15 @@ class _DurationStep extends StatelessWidget {
 
 class _DurTile extends StatefulWidget {
   final DurationOption dur;
-  final bool           sel;
-  final Color          accent;
-  final VoidCallback   onTap;
+  final bool sel;
+  final Color accent;
+  final VoidCallback onTap;
 
   const _DurTile({
-    required this.dur, required this.sel,
-    required this.accent, required this.onTap,
+    required this.dur,
+    required this.sel,
+    required this.accent,
+    required this.onTap,
   });
 
   @override
@@ -1331,12 +1702,19 @@ class _DurTileState extends State<_DurTile>
   late final AnimationController _press;
 
   @override
-  void initState() { super.initState();
-  _press = AnimationController(vsync: this,
-      duration: const Duration(milliseconds: 95)); }
+  void initState() {
+    super.initState();
+    _press = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 95),
+    );
+  }
 
   @override
-  void dispose() { _press.dispose(); super.dispose(); }
+  void dispose() {
+    _press.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1344,17 +1722,25 @@ class _DurTileState extends State<_DurTile>
     final sel = widget.sel;
 
     return GestureDetector(
-      onTapDown:   (_) { _press.forward(); },
-      onTapUp:     (_) { _press.reverse(); widget.onTap(); },
-      onTapCancel: () { _press.reverse(); },
+      onTapDown: (_) {
+        _press.forward();
+      },
+      onTapUp: (_) {
+        _press.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () {
+        _press.reverse();
+      },
       child: AnimatedBuilder(
         animation: _press,
         // FIX BUG 1+4: explicit Transform + extension .xy()
-        builder: (_, child) => Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity().xy(1.0 - _press.value * 0.025),
-          child: child,
-        ),
+        builder:
+            (_, child) => Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity().xy(1.0 - _press.value * 0.025),
+              child: child,
+            ),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           margin: const EdgeInsets.only(bottom: 12),
@@ -1362,83 +1748,146 @@ class _DurTileState extends State<_DurTile>
             borderRadius: BorderRadius.circular(18),
             color: sel ? d.accentColor.withValues(alpha: 0.08) : _C.card,
             border: Border.all(
-                color: sel
-                    ? d.accentColor.withValues(alpha: 0.48)
-                    : _C.textTertiary.withValues(alpha: 0.10),
-                width: sel ? 2 : 1),
-            boxShadow: sel
-                ? [BoxShadow(color: d.accentColor.withValues(alpha: 0.12),
-                blurRadius: 20, offset: const Offset(0, 6))]
-                : null,
+              color:
+                  sel
+                      ? d.accentColor.withValues(alpha: 0.48)
+                      : _C.textTertiary.withValues(alpha: 0.10),
+              width: sel ? 2 : 1,
+            ),
+            boxShadow:
+                sel
+                    ? [
+                      BoxShadow(
+                        color: d.accentColor.withValues(alpha: 0.12),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                    : null,
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(17),
-            child: Stack(children: [
-              // Animated left accent bar
-              Positioned(top: 0, bottom: 0, left: 0,
+            child: Stack(
+              children: [
+                // Animated left accent bar
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  left: 0,
                   child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOutCubic,
-                      width: sel ? 4 : 0,
-                      decoration: BoxDecoration(
-                          color: d.accentColor,
-                          borderRadius: const BorderRadius.only(
-                              topRight:    Radius.circular(4),
-                              bottomRight: Radius.circular(4))))),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 18),
-                child: Row(children: [
-                  AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      width: 56, height: 56,
-                      decoration: BoxDecoration(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    width: sel ? 4 : 0,
+                    decoration: BoxDecoration(
+                      color: d.accentColor,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(4),
+                        bottomRight: Radius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                  child: Row(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: sel
-                              ? d.accentColor.withValues(alpha: 0.15)
-                              : _C.surface,
-                          border: Border.all(color: sel
-                              ? d.accentColor.withValues(alpha: 0.42)
-                              : _C.textTertiary.withValues(alpha: 0.10))),
-                      child: Center(child: Text('${d.minutes}',
-                          style: GoogleFonts.cormorant(
-                              fontSize: 22, fontWeight: FontWeight.w700,
-                              color: sel ? d.accentColor : _C.textSecondary)))),
-                  const SizedBox(width: 18),
-                  Expanded(child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(d.label, style: GoogleFonts.cormorant(
-                            fontSize: 19, fontWeight: FontWeight.w700,
-                            color: sel ? _C.cream : _C.textSecondary)),
-                        const SizedBox(height: 6),
-                        Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
+                          color:
+                              sel
+                                  ? d.accentColor.withValues(alpha: 0.15)
+                                  : _C.surface,
+                          border: Border.all(
+                            color:
+                                sel
+                                    ? d.accentColor.withValues(alpha: 0.42)
+                                    : _C.textTertiary.withValues(alpha: 0.10),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${d.minutes}',
+                            style: GoogleFonts.cormorantGaramond(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: sel ? d.accentColor : _C.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              d.label,
+                              style: GoogleFonts.cormorantGaramond(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w700,
+                                color: sel ? _C.cream : _C.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
                                 color: d.accentColor.withValues(
-                                    alpha: sel ? 0.18 : 0.08)),
-                            child: Text(d.ticketClass, style: GoogleFonts.dmMono(
-                                fontSize: 9, fontWeight: FontWeight.w700,
-                                color: d.accentColor, letterSpacing: 1.5))),
-                      ])),
-                  AnimatedOpacity(
-                      opacity:  sel ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: Container(
-                          width: 28, height: 28,
+                                  alpha: sel ? 0.18 : 0.08,
+                                ),
+                              ),
+                              child: Text(
+                                d.ticketClass,
+                                style: GoogleFonts.spaceMono(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: d.accentColor,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedOpacity(
+                        opacity: sel ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Container(
+                          width: 28,
+                          height: 28,
                           decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: d.accentColor,
-                              boxShadow: [BoxShadow(
-                                  color:      d.accentColor.withValues(alpha: 0.44),
-                                  blurRadius: 10)]),
-                          child: const Icon(Icons.check_rounded,
-                              color: Colors.white, size: 16))),
-                ]),
-              ),
-            ]),
+                            shape: BoxShape.circle,
+                            color: d.accentColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: d.accentColor.withValues(alpha: 0.44),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1451,17 +1900,20 @@ class _DurTileState extends State<_DurTile>
 // ═══════════════════════════════════════════════════════════════
 
 class _BoardingStep extends StatefulWidget {
-  final RouteModel?     route;
-  final MoodOption?     mood;
-  final String          goal;
+  final RouteModel? route;
+  final MoodOption? mood;
+  final String goal;
   final DurationOption? dur;
-  final TickerProvider  vsync;
-  final VoidCallback    onConfirm;
+  final TickerProvider vsync;
+  final VoidCallback onConfirm;
 
   const _BoardingStep({
-    required this.route,     required this.mood,
-    required this.goal,      required this.dur,
-    required this.vsync,     required this.onConfirm,
+    required this.route,
+    required this.mood,
+    required this.goal,
+    required this.dur,
+    required this.vsync,
+    required this.onConfirm,
   });
 
   @override
@@ -1475,17 +1927,27 @@ class _BoardingStepState extends State<_BoardingStep> {
   @override
   void initState() {
     super.initState();
-    _glow = AnimationController(vsync: widget.vsync,
-        duration: const Duration(milliseconds: 3000))
-      ..repeat(reverse: true);
-    _sweep = AnimationController(vsync: widget.vsync,
-        duration: const Duration(milliseconds: 900));
-    Future.delayed(const Duration(milliseconds: 300),
-            () { if (mounted) { _sweep.forward(); } });
+    _glow = AnimationController(
+      vsync: widget.vsync,
+      duration: const Duration(milliseconds: 3000),
+    )..repeat(reverse: true);
+    _sweep = AnimationController(
+      vsync: widget.vsync,
+      duration: const Duration(milliseconds: 900),
+    );
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _sweep.forward();
+      }
+    });
   }
 
   @override
-  void dispose() { _glow.dispose(); _sweep.dispose(); super.dispose(); }
+  void dispose() {
+    _glow.dispose();
+    _sweep.dispose();
+    super.dispose();
+  }
 
   String get _deptTime {
     final n = DateTime.now();
@@ -1495,13 +1957,17 @@ class _BoardingStepState extends State<_BoardingStep> {
 
   String get _gate =>
       '${(DateTime.now().minute % 9) + 1}'
-          '${String.fromCharCode(65 + DateTime.now().second % 5)}';
+      '${String.fromCharCode(65 + DateTime.now().second % 5)}';
 
   @override
   Widget build(BuildContext context) {
     if (widget.route == null || widget.dur == null) {
-      return Center(child: Text('Missing data',
-          style: GoogleFonts.cormorant(color: _C.textSecondary)));
+      return Center(
+        child: Text(
+          'Missing data',
+          style: GoogleFonts.cormorantGaramond(color: _C.textSecondary),
+        ),
+      );
     }
     final r = widget.route!;
     final d = widget.dur!;
@@ -1511,148 +1977,255 @@ class _BoardingStepState extends State<_BoardingStep> {
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
       child: Column(
         children: [
-          const _StepTitle(
-              pre: 'All aboard — your', title: 'Boarding Pass'),
+          const _StepTitle(pre: 'All aboard — your', title: 'Boarding Pass'),
           const SizedBox(height: 10),
 
           // Breathing outer glow
           AnimatedBuilder(
             animation: _glow,
-            builder: (_, child) => Container(
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(
-                      color: r.accentColor.withValues(
-                          alpha: 0.09 + _glow.value * 0.13),
-                      blurRadius: 44, spreadRadius: 2,
-                      offset: const Offset(0, 14))]),
-              child: child,
-            ),
+            builder:
+                (_, child) => Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: r.accentColor.withValues(
+                          alpha: 0.09 + _glow.value * 0.13,
+                        ),
+                        blurRadius: 44,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                  child: child,
+                ),
             child: Container(
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  color: _C.paper,
-                  border: Border.all(
-                      color: r.accentColor.withValues(alpha: 0.48), width: 2)),
+                borderRadius: BorderRadius.circular(24),
+                color: _C.paper,
+                border: Border.all(
+                  color: r.accentColor.withValues(alpha: 0.48),
+                  width: 2,
+                ),
+              ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(22),
-                child: Stack(children: [
-                  // Paper hatch — static
-                  Positioned.fill(child: RepaintBoundary(
-                      child: CustomPaint(painter: _PaperPainter()))),
-                  // Left accent bar
-                  Positioned(top: 0, bottom: 0, left: 0,
-                      child: Container(width: 5, decoration: BoxDecoration(
+                child: Stack(
+                  children: [
+                    // Paper hatch — static
+                    Positioned.fill(
+                      child: RepaintBoundary(
+                        child: CustomPaint(painter: _PaperPainter()),
+                      ),
+                    ),
+                    // Left accent bar
+                    Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      child: Container(
+                        width: 5,
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end:   Alignment.bottomCenter,
-                              colors: [r.accentColor,
-                                r.accentColor.withValues(alpha: 0.40),
-                                r.accentColor])))),
-                  // Punch notches
-                  Positioned(left: -16, top: 0, bottom: 0,
-                      child: Center(child: Container(width: 32, height: 32,
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              r.accentColor,
+                              r.accentColor.withValues(alpha: 0.40),
+                              r.accentColor,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Punch notches
+                    Positioned(
+                      left: -16,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: Container(
+                          width: 32,
+                          height: 32,
                           decoration: const BoxDecoration(
-                              shape: BoxShape.circle, color: _C.bg)))),
-                  Positioned(right: -16, top: 0, bottom: 0,
-                      child: Center(child: Container(width: 32, height: 32,
+                            shape: BoxShape.circle,
+                            color: _C.bg,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: -16,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: Container(
+                          width: 32,
+                          height: 32,
                           decoration: const BoxDecoration(
-                              shape: BoxShape.circle, color: _C.bg)))),
-                  // One-shot shimmer sweep
-                  Positioned.fill(child: IgnorePointer(
-                      child: AnimatedBuilder(
+                            shape: BoxShape.circle,
+                            color: _C.bg,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // One-shot shimmer sweep
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: AnimatedBuilder(
                           animation: _sweep,
-                          builder: (_, __) => CustomPaint(
-                              painter: _SweepPainter(
-                                  t: Curves.easeInOut.transform(_sweep.value)))))),
-                  // Ticket content
-                  Padding(
-                    padding: const EdgeInsets.all(28),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                          builder:
+                              (_, __) => CustomPaint(
+                                painter: _SweepPainter(
+                                  t: Curves.easeInOut.transform(_sweep.value),
+                                ),
+                              ),
+                        ),
+                      ),
+                    ),
+                    // Ticket content
+                    Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(crossAxisAlignment:
-                              CrossAxisAlignment.start, children: [
-                                Text('LUXE RAIL', style: GoogleFonts.dmMono(
-                                    fontSize: 9, letterSpacing: 3,
-                                    color: _C.ink.withValues(alpha: 0.28))),
-                                const SizedBox(height: 4),
-                                Text('BOARDING PASS',
-                                    style: GoogleFonts.cormorant(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w700,
-                                        color: _C.ink, letterSpacing: 1)),
-                              ]),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'LUXE RAIL',
+                                    style: GoogleFonts.spaceMono(
+                                      fontSize: 9,
+                                      letterSpacing: 3,
+                                      color: _C.ink.withValues(alpha: 0.28),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'BOARDING PASS',
+                                    style: GoogleFonts.cormorantGaramond(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700,
+                                      color: _C.ink,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
                               Container(
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: r.accentColor
-                                          .withValues(alpha: 0.24)),
-                                      color: r.accentColor.withValues(alpha: 0.06)),
-                                  child: Text(r.emoji,
-                                      style: const TextStyle(fontSize: 30))),
-                            ]),
-                        const SizedBox(height: 22),
-                        const _DashedLine(),
-                        const SizedBox(height: 22),
-                        _TF(label: 'ROUTE', value: r.name),
-                        const SizedBox(height: 16),
-                        Row(children: [
-                          Expanded(child: _TF(
-                              label: 'CLASS', value: d.ticketClass)),
-                          Expanded(child: _TF(
-                              label: 'DURATION', value: d.label)),
-                        ]),
-                        const SizedBox(height: 16),
-                        Row(children: [
-                          Expanded(child: _TF(label: 'GATE', value: _gate)),
-                          Expanded(child: _TF(
-                              label: 'DEPARTURE', value: _deptTime)),
-                        ]),
-                        if (widget.mood != null) ...[
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: r.accentColor.withValues(
+                                      alpha: 0.24,
+                                    ),
+                                  ),
+                                  color: r.accentColor.withValues(alpha: 0.06),
+                                ),
+                                child: Text(
+                                  r.emoji,
+                                  style: const TextStyle(fontSize: 30),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 22),
+                          const _DashedLine(),
+                          const SizedBox(height: 22),
+                          _TF(label: 'ROUTE', value: r.name),
                           const SizedBox(height: 16),
-                          _TF(label: 'MOOD',
-                              value: '${widget.mood!.emoji}  '
-                                  '${widget.mood!.label}'),
-                        ],
-                        if (widget.goal.isNotEmpty) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _TF(
+                                  label: 'CLASS',
+                                  value: d.ticketClass,
+                                ),
+                              ),
+                              Expanded(
+                                child: _TF(label: 'DURATION', value: d.label),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 16),
-                          _TF(label: 'MISSION', value: widget.goal),
-                        ],
-                        const SizedBox(height: 24),
-                        const _DashedLine(),
-                        const SizedBox(height: 24),
-                        Row(children: [
-                          Container(
-                              width: 80, height: 80,
-                              decoration: BoxDecoration(
+                          Row(
+                            children: [
+                              Expanded(child: _TF(label: 'GATE', value: _gate)),
+                              Expanded(
+                                child: _TF(
+                                  label: 'DEPARTURE',
+                                  value: _deptTime,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (widget.mood != null) ...[
+                            const SizedBox(height: 16),
+                            _TF(
+                              label: 'MOOD',
+                              value:
+                                  '${widget.mood!.emoji}  '
+                                  '${widget.mood!.label}',
+                            ),
+                          ],
+                          if (widget.goal.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            _TF(label: 'MISSION', value: widget.goal),
+                          ],
+                          const SizedBox(height: 24),
+                          const _DashedLine(),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                      color: _C.ink.withValues(alpha: 0.06))),
-                              child: Icon(Icons.qr_code_2_rounded, size: 56,
-                                  color: _C.ink.withValues(alpha: 0.20))),
-                          const SizedBox(width: 18),
-                          Expanded(child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const _TF(label: 'PASSENGER',
-                                    value: 'FOCUS TRAVELLER'),
-                                const SizedBox(height: 10),
-                                RepaintBoundary(child: CustomPaint(
-                                    size: const Size(double.infinity, 24),
-                                    painter: _BarcodePainter(
-                                        seed: r.id.hashCode))),
-                              ])),
-                        ]),
-                      ],
+                                    color: _C.ink.withValues(alpha: 0.06),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.qr_code_2_rounded,
+                                  size: 56,
+                                  color: _C.ink.withValues(alpha: 0.20),
+                                ),
+                              ),
+                              const SizedBox(width: 18),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const _TF(
+                                      label: 'PASSENGER',
+                                      value: 'FOCUS TRAVELLER',
+                                    ),
+                                    const SizedBox(height: 10),
+                                    RepaintBoundary(
+                                      child: CustomPaint(
+                                        size: const Size(double.infinity, 24),
+                                        painter: _BarcodePainter(
+                                          seed: r.id.hashCode,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1677,12 +2250,24 @@ class _TF extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: GoogleFonts.dmMono(
-          fontSize: 8, letterSpacing: 2, fontWeight: FontWeight.w700,
-          color: _C.ink.withValues(alpha: 0.28))),
+      Text(
+        label,
+        style: GoogleFonts.spaceMono(
+          fontSize: 8,
+          letterSpacing: 2,
+          fontWeight: FontWeight.w700,
+          color: _C.ink.withValues(alpha: 0.28),
+        ),
+      ),
       const SizedBox(height: 3),
-      Text(value, style: GoogleFonts.cormorant(
-          fontSize: 17, fontWeight: FontWeight.w600, color: _C.ink)),
+      Text(
+        value,
+        style: GoogleFonts.cormorantGaramond(
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: _C.ink,
+        ),
+      ),
     ],
   );
 }
@@ -1691,20 +2276,26 @@ class _DashedLine extends StatelessWidget {
   const _DashedLine();
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(builder: (_, c) {
-    const dw = 5.0, ds = 4.0;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (_, c) {
+      const dw = 5.0, ds = 4.0;
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(
           (c.maxWidth / (dw + ds)).floor(),
-              (_) => Container(width: dw, height: 1,
-              color: _C.ink.withValues(alpha: 0.10))),
-    );
-  });
+          (_) => Container(
+            width: dw,
+            height: 1,
+            color: _C.ink.withValues(alpha: 0.10),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _ConfirmBtn extends StatefulWidget {
-  final Color        accent;
+  final Color accent;
   final VoidCallback onTap;
   const _ConfirmBtn({required this.accent, required this.onTap});
 
@@ -1717,44 +2308,72 @@ class _ConfirmBtnState extends State<_ConfirmBtn>
   late final AnimationController _press;
 
   @override
-  void initState() { super.initState();
-  _press = AnimationController(vsync: this,
-      duration: const Duration(milliseconds: 95)); }
+  void initState() {
+    super.initState();
+    _press = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 95),
+    );
+  }
 
   @override
-  void dispose() { _press.dispose(); super.dispose(); }
+  void dispose() {
+    _press.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown:   (_) { _press.forward(); },
-      onTapUp:     (_) { _press.reverse(); widget.onTap(); },
-      onTapCancel: () { _press.reverse(); },
+      onTapDown: (_) {
+        _press.forward();
+      },
+      onTapUp: (_) {
+        _press.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () {
+        _press.reverse();
+      },
       child: AnimatedBuilder(
         animation: _press,
         // FIX BUG 1+4: explicit Transform + extension .xy()
-        builder: (_, child) => Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity().xy(1.0 - _press.value * 0.034),
-          child: child,
-        ),
+        builder:
+            (_, child) => Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity().xy(1.0 - _press.value * 0.034),
+              child: child,
+            ),
         child: Container(
-          width: double.infinity, height: 64,
+          width: double.infinity,
+          height: 64,
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: const LinearGradient(
-                  colors: [_C.goldLight, _C.gold, _C.goldDark]),
-              boxShadow: [BoxShadow(
-                  color: _C.gold.withValues(alpha: 0.42),
-                  blurRadius: 28, offset: const Offset(0, 11))]),
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              colors: [_C.goldLight, _C.gold, _C.goldDark],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _C.gold.withValues(alpha: 0.42),
+                blurRadius: 28,
+                offset: const Offset(0, 11),
+              ),
+            ],
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.train_rounded, color: _C.bg, size: 22),
               const SizedBox(width: 12),
-              Text('BOARD YOUR JOURNEY', style: GoogleFonts.dmMono(
-                  fontSize: 13, fontWeight: FontWeight.w700,
-                  letterSpacing: 2.5, color: _C.bg)),
+              Text(
+                'BOARD YOUR JOURNEY',
+                style: GoogleFonts.spaceMono(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.5,
+                  color: _C.bg,
+                ),
+              ),
             ],
           ),
         ),
@@ -1768,7 +2387,7 @@ class _ConfirmBtnState extends State<_ConfirmBtn>
 // ═══════════════════════════════════════════════════════════════
 
 class _Pressable extends StatefulWidget {
-  final Widget       child;
+  final Widget child;
   final VoidCallback onTap;
   const _Pressable({required this.child, required this.onTap});
 
@@ -1781,26 +2400,41 @@ class _PressableState extends State<_Pressable>
   late final AnimationController _ctrl;
 
   @override
-  void initState() { super.initState();
-  _ctrl = AnimationController(vsync: this,
-      duration: const Duration(milliseconds: 95)); }
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 95),
+    );
+  }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTapDown:   (_) { _ctrl.forward(); },
-    onTapUp:     (_) { _ctrl.reverse(); widget.onTap(); },
-    onTapCancel: () { _ctrl.reverse(); },
+    onTapDown: (_) {
+      _ctrl.forward();
+    },
+    onTapUp: (_) {
+      _ctrl.reverse();
+      widget.onTap();
+    },
+    onTapCancel: () {
+      _ctrl.reverse();
+    },
     child: AnimatedBuilder(
       animation: _ctrl,
       // FIX BUG 1+4: explicit Transform + extension .xy()
-      builder: (_, child) => Transform(
-        alignment: Alignment.center,
-        transform: Matrix4.identity().xy(1.0 - _ctrl.value * 0.07),
-        child: child,
-      ),
+      builder:
+          (_, child) => Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity().xy(1.0 - _ctrl.value * 0.07),
+            child: child,
+          ),
       child: widget.child,
     ),
   );
@@ -1813,26 +2447,35 @@ class _PressableState extends State<_Pressable>
 /// Live arc char-count ring — zero allocation in paint()
 class _ArcPainter extends CustomPainter {
   final double pct;
-  final Color  color;
+  final Color color;
   const _ArcPainter({required this.pct, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
     final r = size.width / 2;
     final c = Offset(r, r);
-    canvas.drawCircle(c, r, Paint()
-      ..style       = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..color       = _C.textTertiary.withValues(alpha: 0.20));
-    if (pct <= 0) { return; }
+    canvas.drawCircle(
+      c,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..color = _C.textTertiary.withValues(alpha: 0.20),
+    );
+    if (pct <= 0) {
+      return;
+    }
     canvas.drawArc(
-        Rect.fromCircle(center: c, radius: r - 1.25),
-        -math.pi / 2, 2 * math.pi * pct, false,
-        Paint()
-          ..style       = PaintingStyle.stroke
-          ..strokeWidth = 2.5
-          ..strokeCap   = StrokeCap.round
-          ..color       = color);
+      Rect.fromCircle(center: c, radius: r - 1.25),
+      -math.pi / 2,
+      2 * math.pi * pct,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round
+        ..color = color,
+    );
   }
 
   @override
@@ -1846,15 +2489,24 @@ class _SweepPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (t <= 0 || t >= 1) { return; }
+    if (t <= 0 || t >= 1) {
+      return;
+    }
     final cx = (t * (size.width + 120)) - 60;
-    canvas.drawRect(Offset.zero & size,
-        Paint()..shader = ui.Gradient.linear(
-            Offset(cx - 60, 0), Offset(cx + 60, 0),
-            [Colors.white.withValues(alpha: 0.0),
-              Colors.white.withValues(alpha: 0.22),
-              Colors.white.withValues(alpha: 0.0)],
-            [0.0, 0.5, 1.0]));
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(cx - 60, 0),
+          Offset(cx + 60, 0),
+          [
+            Colors.white.withValues(alpha: 0.0),
+            Colors.white.withValues(alpha: 0.22),
+            Colors.white.withValues(alpha: 0.0),
+          ],
+          [0.0, 0.5, 1.0],
+        ),
+    );
   }
 
   @override
@@ -1864,15 +2516,20 @@ class _SweepPainter extends CustomPainter {
 /// Atmosphere tint on route cards — static
 class _AtmosPainter extends CustomPainter {
   final Color accent;
-  final int   seed;
+  final int seed;
   const _AtmosPainter({required this.accent, required this.seed});
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height * 0.35),
-        Paint()..shader = ui.Gradient.linear(
-            Offset.zero, Offset(0, size.height * 0.35),
-            [accent.withValues(alpha: 0.09), Colors.transparent]));
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height * 0.35),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset.zero,
+          Offset(0, size.height * 0.35),
+          [accent.withValues(alpha: 0.09), Colors.transparent],
+        ),
+    );
   }
 
   @override
@@ -1882,30 +2539,33 @@ class _AtmosPainter extends CustomPainter {
 /// Multi-layer landscape silhouette — static, seed-deterministic
 class _LandscapePainter extends CustomPainter {
   final List<Color> colors;
-  final int         seed;
+  final int seed;
   const _LandscapePainter({required this.colors, required this.seed});
 
   @override
   void paint(Canvas canvas, Size size) {
     final rng = math.Random(seed);
     for (int layer = 0; layer < math.min(3, colors.length); layer++) {
-      final hf   = 0.35 + layer * 0.22;
+      final hf = 0.35 + layer * 0.22;
       final path = Path()..moveTo(0, size.height);
-      double px  = 0;
-      double py  = size.height - hf * size.height;
+      double px = 0;
+      double py = size.height - hf * size.height;
       path.lineTo(px, py);
       for (int seg = 1; seg <= 8; seg++) {
-        final x   = (seg / 8) * size.width;
-        final y   = size.height -
-            (0.25 + rng.nextDouble() * 0.55) * hf * size.height;
+        final x = (seg / 8) * size.width;
+        final y =
+            size.height - (0.25 + rng.nextDouble() * 0.55) * hf * size.height;
         final cpX = px + (x - px) * 0.5;
         path.quadraticBezierTo(cpX, py - 8, x, y);
-        px = x; py = y;
+        px = x;
+        py = y;
       }
       path.lineTo(size.width, size.height);
       path.close();
-      canvas.drawPath(path, Paint()..color =
-      colors[layer].withValues(alpha: 0.85 - layer * 0.20));
+      canvas.drawPath(
+        path,
+        Paint()..color = colors[layer].withValues(alpha: 0.85 - layer * 0.20),
+      );
     }
   }
 
@@ -1917,15 +2577,14 @@ class _LandscapePainter extends CustomPainter {
 class _PaperPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color       = _C.ink.withValues(alpha: 0.014)
-      ..strokeWidth = 1
-      ..style       = PaintingStyle.stroke;
+    final p =
+        Paint()
+          ..color = _C.ink.withValues(alpha: 0.014)
+          ..strokeWidth = 1
+          ..style = PaintingStyle.stroke;
     const gap = 14.0;
-    for (double i = -size.height;
-    i < size.width + size.height; i += gap) {
-      canvas.drawLine(
-          Offset(i, 0), Offset(i + size.height, size.height), p);
+    for (double i = -size.height; i < size.width + size.height; i += gap) {
+      canvas.drawLine(Offset(i, 0), Offset(i + size.height, size.height), p);
     }
   }
 
@@ -1941,8 +2600,8 @@ class _BarcodePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rng = math.Random(seed);
-    final p   = Paint()..color = _C.ink.withValues(alpha: 0.50);
-    double x  = 0;
+    final p = Paint()..color = _C.ink.withValues(alpha: 0.50);
+    double x = 0;
     while (x < size.width) {
       final w = 1.0 + rng.nextInt(4).toDouble();
       if (rng.nextBool()) {

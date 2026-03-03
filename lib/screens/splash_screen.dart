@@ -5,12 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class _Sp {
-  static const ink     = Color(0xFF07090F);
-  static const brass   = Color(0xFFD4A853);
+  static const ink = Color(0xFF07090F);
+  static const brass = Color(0xFFD4A853);
   static const brassLt = Color(0xFFF0CC7A);
   static const brassDk = Color(0xFF8A6930);
-  static const cream   = Color(0xFFF5EDDB);
-  static const t2      = Color(0xFF9A8E78);
+  static const cream = Color(0xFFF5EDDB);
+  static const t2 = Color(0xFF9A8E78);
 }
 
 double _iv(double value, double start, double end) {
@@ -45,7 +45,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _ctrl;
 
   @override
@@ -85,14 +84,18 @@ class _SplashScreenState extends State<SplashScreen>
         builder: (_, __) {
           final t = _ctrl.value;
 
-          final ringAppear    = Curves.easeOut.transform(_iv(t, 0.0, 0.15));
-          final iconScale     = Curves.easeOutBack.transform(_iv(t, 0.08, 0.28)).clamp(0.0, 1.0);
-          final iconGlow      = _iv(t, 0.12, 0.30);
-          final titleFade     = Curves.easeOut.transform(_iv(t, 0.22, 0.38));
-          final titleSpacing  = Curves.easeOutCubic.transform(_iv(t, 0.22, 0.42));
-          final taglineFade   = Curves.easeOut.transform(_iv(t, 0.35, 0.48));
+          final ringAppear = Curves.easeOut.transform(_iv(t, 0.0, 0.15));
+          final iconScale = Curves.easeOutBack
+              .transform(_iv(t, 0.08, 0.28))
+              .clamp(0.0, 1.0);
+          final iconGlow = _iv(t, 0.12, 0.30);
+          final titleFade = Curves.easeOut.transform(_iv(t, 0.22, 0.38));
+          final titleSpacing = Curves.easeOutCubic.transform(
+            _iv(t, 0.22, 0.42),
+          );
+          final taglineFade = Curves.easeOut.transform(_iv(t, 0.35, 0.48));
           final particlePulse = _iv(t, 0.50, 0.72);
-          final fadeOut        = _iv(t, 0.82, 1.0);
+          final fadeOut = _iv(t, 0.82, 1.0);
 
           final masterOpacity = (1.0 - fadeOut).clamp(0.0, 1.0);
 
@@ -140,11 +143,14 @@ class _SplashScreenState extends State<SplashScreen>
                             Opacity(
                               opacity: ringAppear,
                               child: Container(
-                                width: 160, height: 160,
+                                width: 160,
+                                height: 160,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: _Sp.brass.withValues(alpha: ringAppear * 0.5),
+                                    color: _Sp.brass.withValues(
+                                      alpha: ringAppear * 0.5,
+                                    ),
                                     width: 2.5,
                                   ),
                                 ),
@@ -155,11 +161,14 @@ class _SplashScreenState extends State<SplashScreen>
                             Opacity(
                               opacity: ringAppear,
                               child: Container(
-                                width: 140, height: 140,
+                                width: 140,
+                                height: 140,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: _Sp.brass.withValues(alpha: ringAppear * 0.2),
+                                    color: _Sp.brass.withValues(
+                                      alpha: ringAppear * 0.2,
+                                    ),
                                     width: 1,
                                   ),
                                 ),
@@ -175,7 +184,9 @@ class _SplashScreenState extends State<SplashScreen>
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _Sp.brass.withValues(alpha: iconGlow * 0.3),
+                                      color: _Sp.brass.withValues(
+                                        alpha: iconGlow * 0.3,
+                                      ),
                                       blurRadius: 40,
                                       spreadRadius: 10,
                                     ),
@@ -187,22 +198,33 @@ class _SplashScreenState extends State<SplashScreen>
                             Transform.scale(
                               scale: iconScale,
                               child: Container(
-                                width: 80, height: 80,
+                                width: 80,
+                                height: 80,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   gradient: const LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
-                                    colors: [_Sp.brassLt, _Sp.brass, _Sp.brassDk],
+                                    colors: [
+                                      _Sp.brassLt,
+                                      _Sp.brass,
+                                      _Sp.brassDk,
+                                    ],
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _Sp.brass.withValues(alpha: 0.3 + iconGlow * 0.3),
+                                      color: _Sp.brass.withValues(
+                                        alpha: 0.3 + iconGlow * 0.3,
+                                      ),
                                       blurRadius: 24,
                                     ),
                                   ],
                                 ),
-                                child: const Icon(Icons.train_rounded, color: _Sp.ink, size: 38),
+                                child: const Icon(
+                                  Icons.train_rounded,
+                                  color: _Sp.ink,
+                                  size: 38,
+                                ),
                               ),
                             ),
                           ],
@@ -216,7 +238,7 @@ class _SplashScreenState extends State<SplashScreen>
                         opacity: titleFade,
                         child: Text(
                           'LUXE RAIL',
-                          style: GoogleFonts.cormorant(
+                          style: GoogleFonts.cormorantGaramond(
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
                             color: _Sp.cream,
@@ -234,17 +256,23 @@ class _SplashScreenState extends State<SplashScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: 30 * titleFade, height: 1,
+                              width: 30 * titleFade,
+                              height: 1,
                               color: _Sp.brass.withValues(alpha: 0.4),
                             ),
                             const SizedBox(width: 10),
                             Transform.rotate(
                               angle: math.pi / 4,
-                              child: Container(width: 5, height: 5, color: _Sp.brass),
+                              child: Container(
+                                width: 5,
+                                height: 5,
+                                color: _Sp.brass,
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Container(
-                              width: 30 * titleFade, height: 1,
+                              width: 30 * titleFade,
+                              height: 1,
                               color: _Sp.brass.withValues(alpha: 0.4),
                             ),
                           ],
@@ -258,7 +286,7 @@ class _SplashScreenState extends State<SplashScreen>
                         opacity: taglineFade,
                         child: Text(
                           'Focus Through the Journey',
-                          style: GoogleFonts.cormorant(
+                          style: GoogleFonts.cormorantGaramond(
                             fontSize: 15,
                             fontStyle: FontStyle.italic,
                             color: _Sp.t2,

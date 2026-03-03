@@ -37,6 +37,15 @@ class JourneySession {
   /// Post-session reflection note (optional)
   final String? note;
 
+  /// Category tags for this session (e.g., ['work', 'study'])
+  final List<String>? tags;
+
+  /// Mini task list for this session
+  final List<Map<String, dynamic>>? tasks;
+
+  /// Session category (e.g., 'work', 'study')
+  final String? category;
+
   /// Constructor — all data provided at creation time
   JourneySession({
     required this.id,
@@ -47,6 +56,9 @@ class JourneySession {
     this.mood,
     this.goal,
     this.note,
+    this.tags,
+    this.tasks,
+    this.category,
   });
 
   // ── Computed Properties ──────────────────────────────────
@@ -58,8 +70,8 @@ class JourneySession {
   String get formattedDuration {
     if (durationMinutes < 60) return '${durationMinutes}m';
 
-    final int hours = durationMinutes ~/ 60;   // integer division
-    final int mins = durationMinutes % 60;     // remainder
+    final int hours = durationMinutes ~/ 60; // integer division
+    final int mins = durationMinutes % 60; // remainder
 
     if (mins == 0) return '${hours}h';
     return '${hours}h ${mins}m';
@@ -80,6 +92,9 @@ class JourneySession {
       'mood': mood,
       'goal': goal,
       'note': note,
+      'tags': tags,
+      'tasks': tasks,
+      'category': category,
     };
   }
 
@@ -94,13 +109,17 @@ class JourneySession {
       id: map['id'] as String,
       routeName: map['routeName'] as String,
       durationMinutes: map['durationMinutes'] as int,
-      startTime: DateTime.fromMillisecondsSinceEpoch(
-        map['startTime'] as int,
-      ),
+      startTime: DateTime.fromMillisecondsSinceEpoch(map['startTime'] as int),
       completed: map['completed'] as bool,
       mood: map['mood'] as String?,
       goal: map['goal'] as String?,
       note: map['note'] as String?,
+      tags: (map['tags'] as List?)?.cast<String>(),
+      tasks:
+          (map['tasks'] as List?)
+              ?.map((t) => Map<String, dynamic>.from(t as Map))
+              .toList(),
+      category: map['category'] as String?,
     );
   }
 }

@@ -100,14 +100,14 @@ class LuxeText {
     );
   }
 
-  /// Inter — clean UI labels
+  /// Raleway — ultra clean, modern luxury body/label text
   static TextStyle label({
     double fontSize = 12,
     Color color = LuxeColors.textSecondary,
     FontWeight fontWeight = FontWeight.w500,
     double letterSpacing = 1.0,
   }) {
-    return GoogleFonts.inter(
+    return GoogleFonts.raleway(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
@@ -165,9 +165,7 @@ class LuxeDecorations {
         end: Alignment.bottomRight,
         colors: [LuxeColors.charcoal, LuxeColors.velvet],
       ),
-      border: Border.all(
-        color: accent.withValues(alpha: 0.2),
-      ),
+      border: Border.all(color: accent.withValues(alpha: 0.2)),
       boxShadow: [
         BoxShadow(
           color: accent.withValues(alpha: 0.1),
@@ -185,10 +183,7 @@ class LuxeDecorations {
   }) {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(borderRadius),
-      border: Border.all(
-        color: LuxeColors.gold,
-        width: borderWidth,
-      ),
+      border: Border.all(color: LuxeColors.gold, width: borderWidth),
       boxShadow: [
         BoxShadow(
           color: LuxeColors.gold.withValues(alpha: 0.3),

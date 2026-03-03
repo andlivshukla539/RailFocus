@@ -25,8 +25,7 @@
 //    2 = Streak at risk
 // ═══════════════════════════════════════════════════════════════
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart'; // Added to resolve the Color class error
+import 'package:flutter/material.dart'; // Provides Color, debugPrint, etc.
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz_data;
@@ -40,8 +39,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class _Ids {
   static const int sessionComplete = 0;
-  static const int dailyReminder   = 1;
-  static const int streakAtRisk    = 2;
+  static const int dailyReminder = 1;
+  static const int streakAtRisk = 2;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -80,7 +79,7 @@ class NotificationService {
 
   // The plugin instance — singleton, initialized once.
   static final FlutterLocalNotificationsPlugin _plugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   // Whether the service has been initialized.
   static bool _initialized = false;
@@ -208,8 +207,8 @@ class NotificationService {
 
     // Android notification channel — luxe branding.
     const androidDetails = AndroidNotificationDetails(
-      'session_complete',          // Channel ID
-      'Journey Arrivals',          // Channel name (visible in settings)
+      'session_complete', // Channel ID
+      'Journey Arrivals', // Channel name (visible in settings)
       channelDescription: 'Notifies when your focus journey is complete',
       importance: Importance.high,
       priority: Priority.high,
@@ -263,7 +262,9 @@ class NotificationService {
   ///   • Timer completes naturally (arrival screen shows instead)
   ///   • User closes the app during a session
   static Future<void> cancelSessionEnd() async {
-    await _plugin.cancel(id: _Ids.sessionComplete); // <-- FIXED: Added named parameter `id`
+    await _plugin.cancel(
+      id: _Ids.sessionComplete,
+    ); // <-- FIXED: Added named parameter `id`
 
     // Clear stored session data.
     final prefs = await SharedPreferences.getInstance();
@@ -337,7 +338,8 @@ class NotificationService {
     await _plugin.zonedSchedule(
       id: _Ids.dailyReminder, // <-- FIXED: Named parameters
       title: '🚂  Your Journey Awaits',
-      body: 'The platform is ready. Begin today\'s focus journey and keep your streak alive.',
+      body:
+          'The platform is ready. Begin today\'s focus journey and keep your streak alive.',
       scheduledDate: scheduledDate,
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -350,7 +352,9 @@ class NotificationService {
 
   /// Cancels the daily reminder.
   static Future<void> cancelDailyReminder() async {
-    await _plugin.cancel(id: _Ids.dailyReminder); // <-- FIXED: Added named parameter `id`
+    await _plugin.cancel(
+      id: _Ids.dailyReminder,
+    ); // <-- FIXED: Added named parameter `id`
     debugPrint('🔔 NotificationService: Daily reminder cancelled');
   }
 
@@ -402,7 +406,8 @@ class NotificationService {
     await _plugin.zonedSchedule(
       id: _Ids.streakAtRisk, // <-- FIXED: Named parameters
       title: '🔥  Streak at Risk!',
-      body: 'You haven\'t boarded a journey today. Complete one before midnight to keep your streak alive!',
+      body:
+          'You haven\'t boarded a journey today. Complete one before midnight to keep your streak alive!',
       scheduledDate: warningTime,
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -414,7 +419,9 @@ class NotificationService {
 
   /// Cancels the streak warning (called when user completes a session).
   static Future<void> cancelStreakWarning() async {
-    await _plugin.cancel(id: _Ids.streakAtRisk); // <-- FIXED: Added named parameter `id`
+    await _plugin.cancel(
+      id: _Ids.streakAtRisk,
+    ); // <-- FIXED: Added named parameter `id`
   }
 
   // ══════════════════════════════════════════════════════════

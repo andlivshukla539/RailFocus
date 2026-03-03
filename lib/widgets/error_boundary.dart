@@ -12,7 +12,11 @@ class ErrorBoundary {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline_rounded, size: 60, color: Color(0xFFB83838)),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 60,
+                  color: Color(0xFFB83838),
+                ),
                 const SizedBox(height: 24),
                 const Text(
                   'ROUTING ERROR',

@@ -17,6 +17,7 @@ class RouteModel {
   final List<Color> skyGradient;
   final String atmosphere; // rain, snow, clear, foggy, aurora
   final Duration estimatedRealDuration;
+  final double unlockHoursRequired; // 0 = always unlocked
 
   const RouteModel({
     required this.id,
@@ -29,7 +30,10 @@ class RouteModel {
     required this.skyGradient,
     required this.atmosphere,
     required this.estimatedRealDuration,
+    this.unlockHoursRequired = 0,
   });
+
+  bool isUnlocked(double totalHours) => totalHours >= unlockHoursRequired;
 
   // ══════════════════════════════════════
   // THE FIVE PREMIUM ROUTES
@@ -39,7 +43,8 @@ class RouteModel {
     id: 'tokyo_kyoto',
     name: 'Tokyo to Kyoto',
     tagline: 'Cherry Blossom Express',
-    description: 'Glide through ancient temples and spring gardens as sakura petals dance in the wind.',
+    description:
+        'Glide through ancient temples and spring gardens as sakura petals dance in the wind.',
     emoji: '🌸',
     accentColor: Color(0xFFFFB7C5),
     landscapeGradient: [
@@ -47,11 +52,7 @@ class RouteModel {
       Color(0xFFFFB3C6),
       Color(0xFFC9ADA7),
     ],
-    skyGradient: [
-      Color(0xFF2D1B3D),
-      Color(0xFFB85C38),
-      Color(0xFFFFB7C5),
-    ],
+    skyGradient: [Color(0xFF2D1B3D), Color(0xFFB85C38), Color(0xFFFFB7C5)],
     atmosphere: 'clear',
     estimatedRealDuration: Duration(hours: 2, minutes: 15),
   );
@@ -60,7 +61,8 @@ class RouteModel {
     id: 'swiss_alps',
     name: 'Swiss Alps Express',
     tagline: 'Mountain Majesty',
-    description: 'Ascend through crisp alpine air past snow-capped peaks and glacial valleys.',
+    description:
+        'Ascend through crisp alpine air past snow-capped peaks and glacial valleys.',
     emoji: '🏔️',
     accentColor: Color(0xFF5B9BD5),
     landscapeGradient: [
@@ -68,11 +70,7 @@ class RouteModel {
       Color(0xFF8FC4E8),
       Color(0xFFFFFFFF),
     ],
-    skyGradient: [
-      Color(0xFF1A3A5C),
-      Color(0xFF4A7FA5),
-      Color(0xFF8FC4E8),
-    ],
+    skyGradient: [Color(0xFF1A3A5C), Color(0xFF4A7FA5), Color(0xFF8FC4E8)],
     atmosphere: 'snow',
     estimatedRealDuration: Duration(hours: 4, minutes: 30),
   );
@@ -81,7 +79,8 @@ class RouteModel {
     id: 'scottish_highlands',
     name: 'Scottish Highlands',
     tagline: 'Misty Moors',
-    description: 'Traverse ancient castles and rolling heather hills shrouded in mystical fog.',
+    description:
+        'Traverse ancient castles and rolling heather hills shrouded in mystical fog.',
     emoji: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
     accentColor: Color(0xFF6D8B74),
     landscapeGradient: [
@@ -89,11 +88,7 @@ class RouteModel {
       Color(0xFF8AAA91),
       Color(0xFFA8BFA3),
     ],
-    skyGradient: [
-      Color(0xFF3A4A4F),
-      Color(0xFF5A6A6F),
-      Color(0xFF8A9A9F),
-    ],
+    skyGradient: [Color(0xFF3A4A4F), Color(0xFF5A6A6F), Color(0xFF8A9A9F)],
     atmosphere: 'foggy',
     estimatedRealDuration: Duration(hours: 3, minutes: 45),
   );
@@ -102,7 +97,8 @@ class RouteModel {
     id: 'darjeeling',
     name: 'Darjeeling Railway',
     tagline: 'Tea Garden Route',
-    description: 'Wind through emerald tea plantations as golden sunlight filters through the leaves.',
+    description:
+        'Wind through emerald tea plantations as golden sunlight filters through the leaves.',
     emoji: '🍵',
     accentColor: Color(0xFFD4963A),
     landscapeGradient: [
@@ -110,11 +106,7 @@ class RouteModel {
       Color(0xFFD4A574),
       Color(0xFF6B8E4E),
     ],
-    skyGradient: [
-      Color(0xFF4A3020),
-      Color(0xFFD4963A),
-      Color(0xFFE8A87C),
-    ],
+    skyGradient: [Color(0xFF4A3020), Color(0xFFD4963A), Color(0xFFE8A87C)],
     atmosphere: 'clear',
     estimatedRealDuration: Duration(hours: 7, minutes: 0),
   );
@@ -123,7 +115,8 @@ class RouteModel {
     id: 'norwegian_fjords',
     name: 'Norwegian Fjords',
     tagline: 'Northern Lights Trail',
-    description: 'Journey beneath dancing auroras over crystalline fjords and ancient Viking lands.',
+    description:
+        'Journey beneath dancing auroras over crystalline fjords and ancient Viking lands.',
     emoji: '🌊',
     accentColor: Color(0xFF00D9FF),
     landscapeGradient: [
@@ -131,13 +124,70 @@ class RouteModel {
       Color(0xFF5B8FB9),
       Color(0xFF1A2A3A),
     ],
-    skyGradient: [
-      Color(0xFF0A0A1A),
-      Color(0xFF1A2040),
-      Color(0xFF00D9FF),
-    ],
+    skyGradient: [Color(0xFF0A0A1A), Color(0xFF1A2040), Color(0xFF00D9FF)],
     atmosphere: 'aurora',
     estimatedRealDuration: Duration(hours: 6, minutes: 30),
+  );
+
+  // ══════════════════════════════════════
+  // UNLOCKABLE ROUTES (require focus hours)
+  // ══════════════════════════════════════
+
+  static const RouteModel transSiberian = RouteModel(
+    id: 'trans_siberian',
+    name: 'Trans-Siberian',
+    tagline: 'The Endless Taiga',
+    description:
+        'Cross frozen tundra and endless birch forests on the world\'s longest railway.',
+    emoji: '❄️',
+    accentColor: Color(0xFFE0E8F0),
+    landscapeGradient: [
+      Color(0xFFD0E0F0),
+      Color(0xFFA0B8C8),
+      Color(0xFF506878),
+    ],
+    skyGradient: [Color(0xFF0A1020), Color(0xFF1A2848), Color(0xFF4A6890)],
+    atmosphere: 'snow',
+    estimatedRealDuration: Duration(hours: 144),
+    unlockHoursRequired: 5,
+  );
+
+  static const RouteModel orientExpress = RouteModel(
+    id: 'orient_express',
+    name: 'Orient Express',
+    tagline: 'The Golden Age',
+    description:
+        'Relive the elegance of 1920s luxury travel from Paris to Istanbul.',
+    emoji: '🌟',
+    accentColor: Color(0xFFDAA520),
+    landscapeGradient: [
+      Color(0xFFDAA520),
+      Color(0xFFB8860B),
+      Color(0xFF654321),
+    ],
+    skyGradient: [Color(0xFF1A0A08), Color(0xFF3A1A10), Color(0xFF8A4A20)],
+    atmosphere: 'clear',
+    estimatedRealDuration: Duration(hours: 40),
+    unlockHoursRequired: 10,
+  );
+
+  static const RouteModel indianPacific = RouteModel(
+    id: 'indian_pacific',
+    name: 'Indian Pacific',
+    tagline: 'Coast to Coast',
+    description:
+        'Traverse the vast Australian outback from Sydney to Perth under endless skies.',
+    emoji: '🇳🇺',
+    accentColor: Color(0xFFE87040),
+    landscapeGradient: [
+      Color(0xFFE87040),
+      Color(0xFFC85828),
+      Color(0xFF884020),
+    ],
+    skyGradient: [Color(0xFF200808), Color(0xFF501808), Color(0xFFA84818)],
+    atmosphere: 'clear',
+    estimatedRealDuration: Duration(hours: 65),
+    unlockHoursRequired: 20,
   );
 
   static const List<RouteModel> allRoutes = [
@@ -146,6 +196,9 @@ class RouteModel {
     scottishHighlands,
     darjeelingRailway,
     norwegianFjords,
+    transSiberian,
+    orientExpress,
+    indianPacific,
   ];
 
   /// Get route by ID

@@ -14,7 +14,6 @@
 // ═══════════════════════════════════════════════════════════════
 
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +21,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../router/app_router.dart' show markOnboardingDone, AppRouter;
-import 'package:go_router/go_router.dart';
 
 import '../router/app_router.dart';
 
@@ -31,14 +29,13 @@ import '../router/app_router.dart';
 // ═══════════════════════════════════════════════════════════════
 
 class _C {
-  static const ink     = Color(0xFF07090F);
-  static const panel   = Color(0xFF131620);
-  static const brass   = Color(0xFFD4A853);
+  static const ink = Color(0xFF07090F);
+  static const panel = Color(0xFF131620);
+  static const brass = Color(0xFFD4A853);
   static const brassLt = Color(0xFFF0CC7A);
   static const brassDk = Color(0xFF8A6930);
-  static const cream   = Color(0xFFF5EDDB);
-  static const t2      = Color(0xFF9A8E78);
-  static const t3      = Color(0xFF564E40);
+  static const cream = Color(0xFFF5EDDB);
+  static const t2 = Color(0xFF9A8E78);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -67,7 +64,7 @@ const _pages = [
     title: 'Welcome Aboard',
     subtitle: 'LUXE RAIL',
     description:
-    'Transform your focus sessions into luxury train journeys. '
+        'Transform your focus sessions into luxury train journeys. '
         'Choose a scenic route, set your intention, and let the rhythm '
         'of the rails carry you to deep work.',
     accent: Color(0xFFD4A853),
@@ -77,7 +74,7 @@ const _pages = [
     title: 'Set Your Intention',
     subtitle: 'BOOK YOUR JOURNEY',
     description:
-    'Pick a destination, choose your mood, and define your mission. '
+        'Pick a destination, choose your mood, and define your mission. '
         'Each journey is tailored to help you focus on what matters most.',
     accent: Color(0xFF5CA8D8),
   ),
@@ -86,7 +83,7 @@ const _pages = [
     title: 'Enjoy the Scenery',
     subtitle: 'FOCUS & FLOW',
     description:
-    'Watch hand-painted landscapes scroll past your observation window. '
+        'Watch hand-painted landscapes scroll past your observation window. '
         'Ambient sounds keep you in the zone while the timer tracks your progress.',
     accent: Color(0xFF7050C0),
   ),
@@ -116,7 +113,6 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with TickerProviderStateMixin {
-
   final _pageCtrl = PageController();
   int _currentPage = 0;
 
@@ -186,19 +182,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _glowCtrl,
-              builder: (_, __) => DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: const Alignment(0, -0.3),
-                    radius: 1.2,
-                    colors: [
-                      page.accent.withValues(
-                          alpha: 0.04 + _glowCtrl.value * 0.06),
-                      _C.ink,
-                    ],
+              builder:
+                  (_, __) => DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(0, -0.3),
+                        radius: 1.2,
+                        colors: [
+                          page.accent.withValues(
+                            alpha: 0.04 + _glowCtrl.value * 0.06,
+                          ),
+                          _C.ink,
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
             ),
           ),
 
@@ -233,7 +231,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             ),
                             child: Text(
                               'SKIP',
-                              style: GoogleFonts.dmMono(
+                              style: GoogleFonts.spaceMono(
                                 fontSize: 10,
                                 color: _C.t2,
                                 letterSpacing: 2,
@@ -254,10 +252,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         setState(() => _currentPage = i);
                         HapticFeedback.selectionClick();
                       },
-                      itemBuilder: (_, i) => _PageContent(
-                        page: _pages[i],
-                        glowCtrl: _glowCtrl,
-                      ),
+                      itemBuilder:
+                          (_, i) => _PageContent(
+                            page: _pages[i],
+                            glowCtrl: _glowCtrl,
+                          ),
                     ),
                   ),
 
@@ -277,9 +276,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           height: 8,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
-                            color: isActive
-                                ? page.accent
-                                : page.accent.withValues(alpha: 0.2),
+                            color:
+                                isActive
+                                    ? page.accent
+                                    : page.accent.withValues(alpha: 0.2),
                           ),
                         );
                       }),
@@ -298,11 +298,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                           gradient: LinearGradient(
-                            colors: [
-                              _C.brassLt,
-                              _C.brass,
-                              _C.brassDk,
-                            ],
+                            colors: [_C.brassLt, _C.brass, _C.brassDk],
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -319,7 +315,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               _currentPage < _pages.length - 1
                                   ? 'CONTINUE'
                                   : 'BEGIN JOURNEY',
-                              style: GoogleFonts.dmMono(
+                              style: GoogleFonts.spaceMono(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: _C.ink,
@@ -351,10 +347,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     radius: 1.0,
-                    colors: [
-                      Colors.transparent,
-                      _C.ink.withValues(alpha: 0.5),
-                    ],
+                    colors: [Colors.transparent, _C.ink.withValues(alpha: 0.5)],
                     stops: const [0.5, 1.0],
                   ),
                 ),
@@ -375,10 +368,7 @@ class _PageContent extends StatelessWidget {
   final _OnboardingPage page;
   final AnimationController glowCtrl;
 
-  const _PageContent({
-    required this.page,
-    required this.glowCtrl,
-  });
+  const _PageContent({required this.page, required this.glowCtrl});
 
   @override
   Widget build(BuildContext context) {
@@ -393,33 +383,33 @@ class _PageContent extends StatelessWidget {
           // Emoji icon with glow
           AnimatedBuilder(
             animation: glowCtrl,
-            builder: (_, child) => Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: page.accent.withValues(alpha: 0.08),
-                border: Border.all(
-                  color: page.accent.withValues(
-                      alpha: 0.2 + glowCtrl.value * 0.15),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: page.accent.withValues(
-                        alpha: 0.1 + glowCtrl.value * 0.1),
-                    blurRadius: 30,
-                    spreadRadius: 5,
+            builder:
+                (_, child) => Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: page.accent.withValues(alpha: 0.08),
+                    border: Border.all(
+                      color: page.accent.withValues(
+                        alpha: 0.2 + glowCtrl.value * 0.15,
+                      ),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: page.accent.withValues(
+                          alpha: 0.1 + glowCtrl.value * 0.1,
+                        ),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: child,
-            ),
+                  child: child,
+                ),
             child: Center(
-              child: Text(
-                page.emoji,
-                style: const TextStyle(fontSize: 52),
-              ),
+              child: Text(page.emoji, style: const TextStyle(fontSize: 52)),
             ),
           ),
 
@@ -428,7 +418,7 @@ class _PageContent extends StatelessWidget {
           // Subtitle
           Text(
             page.subtitle,
-            style: GoogleFonts.dmMono(
+            style: GoogleFonts.spaceMono(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: page.accent,
@@ -441,7 +431,7 @@ class _PageContent extends StatelessWidget {
           // Title
           Text(
             page.title,
-            style: GoogleFonts.cormorant(
+            style: GoogleFonts.cormorantGaramond(
               fontSize: 36,
               fontWeight: FontWeight.w700,
               color: _C.cream,
@@ -504,13 +494,11 @@ class _PageContent extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: _C.panel.withValues(alpha: 0.5),
-              border: Border.all(
-                color: _C.brass.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: _C.brass.withValues(alpha: 0.1)),
             ),
             child: Text(
               page.description,
-              style: GoogleFonts.cormorant(
+              style: GoogleFonts.cormorantGaramond(
                 fontSize: 17,
                 fontStyle: FontStyle.italic,
                 color: _C.cream.withValues(alpha: 0.8),

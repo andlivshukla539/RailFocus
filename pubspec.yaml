@@ -29,6 +29,13 @@ dependencies:
   wakelock_plus: ^1.4.0
   permission_handler: ^12.0.1
   flutter_native_splash: ^2.4.7
+  fl_chart: ^0.70.2
+  share_plus: ^12.0.1
+  path_provider: ^2.1.5
+  firebase_core: ^4.5.0
+  firebase_auth: ^6.2.0
+  google_sign_in: ^7.2.0
+  cloud_firestore: ^6.1.3
 
 dev_dependencies:
   flutter_test:
@@ -72,8 +79,8 @@ flutter:
     - assets/sounds/Sleep.mp3
     - assets/sounds/train_ambient.mp3
     - assets/sounds/whistle.mp3
-    - assets/sounds/click.mp3
     - assets/sounds/arrival_bell.mp3
     - assets/sounds/ticket_stamp.mp3
     - assets/icon/icon.png
     - assets/icon/splash_logo.png
+    - assets/fonts/

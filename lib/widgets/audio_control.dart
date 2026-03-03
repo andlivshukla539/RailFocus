@@ -14,18 +14,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/audio_service.dart';
+import '../widgets/sound_mixer.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // PALETTE (matches history_screen.dart _P pattern)
 // ═══════════════════════════════════════════════════════════════
 
 class _C {
-  static const ink     = Color(0xFF07090F);
-  static const panel   = Color(0xFF131620);
+  static const ink = Color(0xFF07090F);
+  static const panel = Color(0xFF131620);
   static const surface = Color(0xFF1A1E2C);
-  static const brass   = Color(0xFFD4A853);
-  static const cream   = Color(0xFFF5EDDB);
-  static const t2      = Color(0xFF9A8E78);
+  static const brass = Color(0xFFD4A853);
+  static const cream = Color(0xFFF5EDDB);
+  static const t2 = Color(0xFF9A8E78);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -38,10 +39,7 @@ class AudioControlButton extends StatefulWidget {
   /// Optional size override (default 44px — good touch target).
   final double size;
 
-  const AudioControlButton({
-    super.key,
-    this.size = 44,
-  });
+  const AudioControlButton({super.key, this.size = 44});
 
   @override
   State<AudioControlButton> createState() => _AudioControlButtonState();
@@ -98,6 +96,10 @@ class _AudioControlButtonState extends State<AudioControlButton>
 
     return GestureDetector(
       onTap: _onTap,
+      onLongPress: () {
+        HapticFeedback.mediumImpact();
+        showSoundMixer(context);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: widget.size,
@@ -107,37 +109,38 @@ class _AudioControlButtonState extends State<AudioControlButton>
           shape: BoxShape.circle,
 
           // Background changes subtly based on mute state.
-          color: isMuted
-              ? _C.surface // Dimmer when muted
-              : _C.panel,  // Slightly brighter when active
-
+          color:
+              isMuted
+                  ? _C
+                      .surface // Dimmer when muted
+                  : _C.panel, // Slightly brighter when active
           // Border — brass accent when unmuted, subtle when muted.
           border: Border.all(
-            color: isMuted
-                ? _C.t2.withValues(alpha: 0.2)
-                : _C.brass.withValues(alpha: 0.3),
+            color:
+                isMuted
+                    ? _C.t2.withValues(alpha: 0.2)
+                    : _C.brass.withValues(alpha: 0.3),
             width: 1,
           ),
 
           // Subtle glow when audio is active (unmuted).
-          boxShadow: isMuted
-              ? [] // No glow when muted
-              : [
-            BoxShadow(
-              color: _C.brass.withValues(alpha: 0.15),
-              blurRadius: 12,
-              spreadRadius: 1,
-            ),
-          ],
+          boxShadow:
+              isMuted
+                  ? [] // No glow when muted
+                  : [
+                    BoxShadow(
+                      color: _C.brass.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ],
         ),
 
         // The icon — animates between speaker and muted speaker.
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           child: Icon(
-            isMuted
-                ? Icons.volume_off_rounded
-                : Icons.volume_up_rounded,
+            isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
             // Key forces AnimatedSwitcher to animate when icon changes.
             key: ValueKey(isMuted),
             color: isMuted ? _C.t2 : _C.brass,
@@ -180,12 +183,11 @@ class _AudioControlPanelState extends State<AudioControlPanel> {
           // ── Section Title ──────────────────────────────
           Row(
             children: [
-              const Icon(Icons.music_note_rounded,
-                  color: _C.brass, size: 18),
+              const Icon(Icons.music_note_rounded, color: _C.brass, size: 18),
               const SizedBox(width: 10),
               Text(
                 'SOUND',
-                style: GoogleFonts.dmMono(
+                style: GoogleFonts.spaceMono(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: _C.brass,
@@ -253,9 +255,11 @@ class _VolumeSlider extends StatelessWidget {
     return Row(
       children: [
         // Icon
-        Icon(icon,
-            color: isMuted ? _C.t2.withValues(alpha: 0.3) : _C.brass,
-            size: 16),
+        Icon(
+          icon,
+          color: isMuted ? _C.t2.withValues(alpha: 0.3) : _C.brass,
+          size: 16,
+        ),
 
         const SizedBox(width: 10),
 
@@ -264,7 +268,7 @@ class _VolumeSlider extends StatelessWidget {
           width: 60,
           child: Text(
             label,
-            style: GoogleFonts.dmMono(
+            style: GoogleFonts.spaceMono(
               fontSize: 8,
               fontWeight: FontWeight.w700,
               color: isMuted ? _C.t2.withValues(alpha: 0.3) : _C.t2,
@@ -278,15 +282,14 @@ class _VolumeSlider extends StatelessWidget {
           child: SliderTheme(
             data: SliderThemeData(
               // Track (the line the thumb slides on).
-              activeTrackColor: isMuted ? _C.t2.withValues(alpha: 0.2) : _C.brass,
+              activeTrackColor:
+                  isMuted ? _C.t2.withValues(alpha: 0.2) : _C.brass,
               inactiveTrackColor: _C.surface,
               trackHeight: 3,
 
               // Thumb (the draggable circle).
               thumbColor: isMuted ? _C.t2 : _C.cream,
-              thumbShape: const RoundSliderThumbShape(
-                enabledThumbRadius: 6,
-              ),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
 
               // No overlay (the ripple when dragging).
               overlayShape: SliderComponentShape.noOverlay,
@@ -307,7 +310,7 @@ class _VolumeSlider extends StatelessWidget {
           child: Text(
             '${(value * 100).round()}%',
             textAlign: TextAlign.right,
-            style: GoogleFonts.dmMono(
+            style: GoogleFonts.spaceMono(
               fontSize: 9,
               color: isMuted ? _C.t2.withValues(alpha: 0.3) : _C.t2,
             ),
