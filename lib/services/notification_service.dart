@@ -132,11 +132,18 @@ class NotificationService {
   }
 
   /// Called when the user taps a notification.
-  /// We could navigate to a specific screen here, but for now
-  /// the app just opens normally (which is fine).
   static void _onNotificationTapped(NotificationResponse response) {
-    debugPrint('🔔 NotificationService: Tapped → ${response.payload}');
-    // Future enhancement: parse payload and navigate to arrival/history
+    final payload = response.payload ?? '';
+    debugPrint('🔔 NotificationService: Tapped → $payload');
+
+    // The ongoing_timer notification is purely informational.
+    // Tapping it just resumes the app to wherever it was (the focus screen).
+    // We explicitly do nothing so the focus session is not interrupted.
+    if (payload == 'ongoing_timer') return;
+
+    // Future enhancement: parse other payloads and navigate
+    // e.g. 'session_complete' → arrival screen
+    // e.g. 'daily_reminder'  → home screen
   }
 
   // ══════════════════════════════════════════════════════════

@@ -33,6 +33,8 @@ import '../widgets/animated_counter.dart';
 import '../widgets/station_widget.dart';
 import '../widgets/daily_challenge_card.dart';
 import '../models/daily_challenge.dart';
+import '../services/cabin_service.dart';
+import 'cabin_selection_screen.dart';
 import '../widgets/streak_calendar.dart';
 import '../widgets/level_up_overlay.dart';
 import '../services/ai_coach_service.dart';
@@ -584,6 +586,17 @@ class _HomeScreenState extends State<HomeScreen>
                             child: StreakCalendar(focusData: _focusData),
                           )
                               .animate(delay: 540.ms)
+                              .fadeIn(duration: 600.ms)
+                              .slideY(begin: 0.08, end: 0),
+
+                          const SizedBox(height: 24),
+
+                          // PASSENGER CABINS
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: _PassengerCabinCard(),
+                          )
+                              .animate(delay: 545.ms)
                               .fadeIn(duration: 600.ms)
                               .slideY(begin: 0.08, end: 0),
 
@@ -3202,4 +3215,109 @@ class _HatchPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
+}
+
+// ════════════════════════════════════════════════════════════════
+// PASSENGER CABIN CARD — Social Co-Working Entry Point
+// ════════════════════════════════════════════════════════════════
+
+class _PassengerCabinCard extends StatelessWidget {
+  _PassengerCabinCard();
+
+  final _service = CabinService.instance;
+
+  @override
+  Widget build(BuildContext context) {
+    final inCabin = _service.currentCabinId != null;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const CabinSelectionScreen(),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF121825), Color(0xFF0E1018)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFD4A853).withValues(alpha: 0.2),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFD4A853).withValues(alpha: 0.1),
+                border: Border.all(
+                  color: const Color(0xFFD4A853).withValues(alpha: 0.25),
+                ),
+              ),
+              child: const Center(
+                child: Text('👥', style: TextStyle(fontSize: 22)),
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PASSENGER CABINS',
+                    style: GoogleFonts.spaceMono(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFD4A853),
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  StreamBuilder<List<CabinModel>>(
+                    stream: _service.publicCabinsStream(),
+                    builder: (_, snap) {
+                      final cabins = snap.data ?? [];
+                      final activeCount = cabins.fold<int>(
+                        0,
+                        (sum, c) => sum + c.activeCount,
+                      );
+                      return Text(
+                        inCabin
+                            ? 'You\'re in a cabin — focus together'
+                            : activeCount > 0
+                                ? '$activeCount passengers focusing now'
+                                : 'Open a cabin and invite friends',
+                        style: GoogleFonts.cormorantGaramond(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          color: const Color(0xFF9A8E78),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFFD4A853),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
