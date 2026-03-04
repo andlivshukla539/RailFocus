@@ -589,19 +589,6 @@ class _HomeScreenState extends State<HomeScreen>
                               .fadeIn(duration: 600.ms)
                               .slideY(begin: 0.08, end: 0),
 
-                          const SizedBox(height: 24),
-
-                          // PASSENGER CABINS
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: _PassengerCabinCard(),
-                          )
-                              .animate(delay: 545.ms)
-                              .fadeIn(duration: 600.ms)
-                              .slideY(begin: 0.08, end: 0),
-
-                          const SizedBox(height: 24),
-
                           // SECTION DIVIDER
                           _ArtDecoDivider(
                             accent: _scene.accent,
