@@ -496,7 +496,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
       animation: _contentCtrl,
       builder: (_, child) {
         final opacity = Curves.easeOut.transform(
-          (_contentCtrl.value - 0.3).clamp(0.0, 1.0) / 0.7,
+          ((_contentCtrl.value - 0.3) / 0.7).clamp(0.0, 1.0),
         );
 
         return Opacity(opacity: opacity, child: child);
@@ -688,7 +688,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
       animation: _statsCtrl,
       builder: (_, child) {
         final opacity = Curves.easeOut.transform(
-          (_statsCtrl.value - 0.5).clamp(0.0, 1.0) * 2,
+          ((_statsCtrl.value - 0.5) * 2).clamp(0.0, 1.0),
         );
 
         return Opacity(opacity: opacity, child: child);
@@ -770,7 +770,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
       animation: _statsCtrl,
       builder: (_, child) {
         final opacity = Curves.easeOut.transform(
-          (_statsCtrl.value - 0.6).clamp(0.0, 1.0) / 0.4,
+          ((_statsCtrl.value - 0.6) / 0.4).clamp(0.0, 1.0),
         );
 
         return Opacity(opacity: opacity, child: child);
@@ -906,7 +906,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
       animation: _statsCtrl,
       builder: (_, child) {
         final opacity = Curves.easeOut.transform(
-          (_statsCtrl.value - 0.7).clamp(0.0, 1.0) / 0.3,
+          ((_statsCtrl.value - 0.7) / 0.3).clamp(0.0, 1.0),
         );
         return Opacity(opacity: opacity, child: child);
       },
@@ -961,7 +961,7 @@ class _ArrivalScreenState extends State<ArrivalScreen>
       animation: _statsCtrl,
       builder: (_, child) {
         final opacity = Curves.easeOut.transform(
-          (_statsCtrl.value - 0.8).clamp(0.0, 1.0) / 0.2,
+          ((_statsCtrl.value - 0.8) / 0.2).clamp(0.0, 1.0),
         );
 
         return Opacity(opacity: opacity, child: child);

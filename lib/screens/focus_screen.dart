@@ -23,6 +23,7 @@ import '../services/timer_service.dart';
 import '../services/wakelock_service.dart';
 import '../widgets/audio_control.dart';
 import '../widgets/journey_map_widget.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 bool get _isLowEnd {
   return WidgetsBinding.instance.window.physicalSize.shortestSide < 720;
@@ -700,35 +701,72 @@ class _FocusScreenState extends State<FocusScreen>
           ),
 
           // ── Main content ────────────────────────────────────
-          FadeTransition(
-            opacity: _fadein,
-            child: SlideTransition(
-              position: _slidein,
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    _buildHeader(accent),
-                    const SizedBox(height: 8),
-                    Expanded(flex: 10, child: _buildWindow()),
-                    const SizedBox(height: 14),
-                    _buildTimer(),
-                    const SizedBox(height: 10),
-                    JourneyMapWidget(
-                      routeId: _route.id,
-                      routeEmoji: _route.emoji,
-                      distanceKm: _vis.distanceKm,
-                      progress: _progN,
-                      accentColor: accent,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSoundPanel(accent),
-                    const SizedBox(height: 10),
-                    _buildControls(accent),
-                    const SizedBox(height: 16),
-                  ],
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+
+                // Header — fade in first
+                _buildHeader(accent)
+                    .animate()
+                    .fadeIn(duration: 500.ms, curve: Curves.easeOut)
+                    .slideY(begin: -0.15, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+
+                const SizedBox(height: 8),
+
+                // Window — scale + fade for cinematic reveal
+                Expanded(
+                  flex: 10,
+                  child: _buildWindow()
+                      .animate(delay: 150.ms)
+                      .fadeIn(duration: 700.ms, curve: Curves.easeOut)
+                      .scale(
+                        begin: const Offset(0.92, 0.92),
+                        end: const Offset(1, 1),
+                        duration: 700.ms,
+                        curve: Curves.easeOutCubic,
+                      ),
                 ),
-              ),
+
+                const SizedBox(height: 14),
+
+                // Timer — slide up + fade
+                _buildTimer()
+                    .animate(delay: 300.ms)
+                    .fadeIn(duration: 600.ms, curve: Curves.easeOut)
+                    .slideY(begin: 0.2, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
+
+                const SizedBox(height: 10),
+
+                // Journey map — slide from right
+                JourneyMapWidget(
+                  routeId: _route.id,
+                  routeEmoji: _route.emoji,
+                  distanceKm: _vis.distanceKm,
+                  progress: _progN,
+                  accentColor: accent,
+                ).animate(delay: 400.ms)
+                    .fadeIn(duration: 500.ms)
+                    .slideX(begin: 0.08, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+
+                const SizedBox(height: 12),
+
+                // Sound panel — fade in
+                _buildSoundPanel(accent)
+                    .animate(delay: 500.ms)
+                    .fadeIn(duration: 500.ms, curve: Curves.easeOut)
+                    .slideY(begin: 0.1, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+
+                const SizedBox(height: 10),
+
+                // Controls — last to appear
+                _buildControls(accent)
+                    .animate(delay: 600.ms)
+                    .fadeIn(duration: 500.ms, curve: Curves.easeOut)
+                    .slideY(begin: 0.15, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+
+                const SizedBox(height: 16),
+              ],
             ),
           ),
 
@@ -3024,33 +3062,36 @@ class _MilestoneToastState extends State<_MilestoneToast>
           child: Opacity(
             opacity: opacity,
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF131620).withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: widget.accentColor.withValues(alpha: 0.4),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.accentColor.withValues(alpha: 0.2),
-                      blurRadius: 20,
-                      spreadRadius: 2,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF131620).withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: widget.accentColor.withValues(alpha: 0.4),
                     ),
-                  ],
-                ),
-                child: Text(
-                  widget.message,
-                  style: GoogleFonts.cormorantGaramond(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    fontStyle: FontStyle.italic,
-                    color: const Color(0xFFF5EDDB),
-                    letterSpacing: 1,
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.accentColor.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    widget.message,
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFFF5EDDB),
+                      letterSpacing: 1,
+                    ),
                   ),
                 ),
               ),

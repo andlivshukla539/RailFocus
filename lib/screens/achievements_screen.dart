@@ -10,6 +10,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/achievement_model.dart';
 import '../services/achievement_service.dart';
+import '../router/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // PALETTE
@@ -140,7 +142,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: _P.gold,
-                    letterSpacing: 3,
+                    letterSpacing: 2,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -155,7 +157,36 @@ class _AchievementsScreenState extends State<AchievementsScreen>
               ],
             ),
           ),
-          Text('🏆', style: const TextStyle(fontSize: 28)),
+          
+          // Passport Button
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              context.push(AppRouter.passport);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _P.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _P.rim, width: 1),
+              ),
+              child: Row(
+                children: [
+                  const Text('🛂', style: TextStyle(fontSize: 14)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'PASSPORT',
+                    style: GoogleFonts.spaceMono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: _P.cream,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

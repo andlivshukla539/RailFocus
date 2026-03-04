@@ -35,6 +35,7 @@ import '../widgets/daily_challenge_card.dart';
 import '../models/daily_challenge.dart';
 import '../widgets/streak_calendar.dart';
 import '../widgets/level_up_overlay.dart';
+import '../services/ai_coach_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -258,6 +259,7 @@ class _HomeScreenState extends State<HomeScreen>
   Map<String, int> _focusData = {};
   bool _showLevelUp = false;
   int _prevStationLevel = -1;
+  String _aiTip = '';
 
   FocusMood get _focusMood {
     final today = DateTime.now();
@@ -401,6 +403,11 @@ class _HomeScreenState extends State<HomeScreen>
         _prevStationLevel = newLevel;
       });
       _counter.forward(from: 0);
+
+      // Load AI coach tip (async, non-blocking)
+      AiCoachService.instance.getDailyCoachTip().then((tip) {
+        if (mounted) setState(() => _aiTip = tip);
+      });
 
       // Phase 8: Schedule streak warning if needed
       if (_streak > 0) {
@@ -581,6 +588,75 @@ class _HomeScreenState extends State<HomeScreen>
 
                           const SizedBox(height: 20),
 
+                          // AI COACH TIP
+                          if (_aiTip.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  context.push(AppRouter.insights);
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [Color(0xFF1A1535), Color(0xFF131620)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: const Color(0xFF9B85D4).withValues(alpha: 0.25),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('🤖', style: TextStyle(fontSize: 18)),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'AI COACH',
+                                              style: GoogleFonts.spaceMono(
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF9B85D4),
+                                                letterSpacing: 2,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              _aiTip,
+                                              style: GoogleFonts.cormorantGaramond(
+                                                fontSize: 14,
+                                                color: _P.cream.withValues(alpha: 0.85),
+                                                height: 1.3,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 12,
+                                        color: const Color(0xFF9B85D4).withValues(alpha: 0.5),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                                .animate(delay: 560.ms)
+                                .fadeIn(duration: 600.ms)
+                                .slideY(begin: 0.08, end: 0),
+
+                          const SizedBox(height: 14),
+
                           // JOURNEY CARDS
                           SizedBox(
                             height: 160,
@@ -696,6 +772,8 @@ class _HomeScreenState extends State<HomeScreen>
                   children: [
                     Text(
                       _greeting,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.cormorantGaramond(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -705,6 +783,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     Text(
                       _focusMood.label,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.cormorantGaramond(
                         fontSize: 11,
@@ -792,27 +871,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              const SizedBox(width: 4),
-
-              // Passport button
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  context.push(AppRouter.passport);
-                },
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _P.raised,
-                    border: Border.all(color: _P.brass.withValues(alpha: 0.18)),
-                  ),
-                  child: const Center(
-                    child: Text('🛂', style: TextStyle(fontSize: 14)),
-                  ),
-                ),
-              ),
+              // Passport button removed and moved to Achievements Screen
 
               const SizedBox(width: 4),
 
@@ -833,6 +892,30 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   child: const Icon(
                     Icons.auto_stories_rounded,
+                    color: _P.cream,
+                    size: 15,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+              // Settings button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.push(AppRouter.settings);
+                },
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _P.raised,
+                    border: Border.all(color: _P.brass.withValues(alpha: 0.18)),
+                  ),
+                  child: const Icon(
+                    Icons.settings_rounded,
                     color: _P.cream,
                     size: 15,
                   ),
@@ -2435,7 +2518,7 @@ class _BrassLeverState extends State<_BrassLever>
                   color: widget.accent.withValues(
                     alpha: 0.08 + widget.pulse.value * 0.12,
                   ),
-                  blurRadius: 24 + widget.pulse.value * 12,
+                  blurRadius: (24 + widget.pulse.value * 12).clamp(0.0, 999.0),
                   spreadRadius: -2 + widget.pulse.value * 4,
                 ),
               ],

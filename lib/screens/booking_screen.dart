@@ -158,6 +158,8 @@ class _BookingScreenState extends State<BookingScreen>
   MoodOption? _mood;
   String _goal = '';
   DurationOption? _dur;
+  bool _breathingEnabled = true;
+  bool _pomodoroEnabled = false;
 
   @override
   void initState() {
@@ -225,6 +227,8 @@ class _BookingScreenState extends State<BookingScreen>
         'mood': _mood?.label,
         'goal': _goal,
         'durationMinutes': _dur!.minutes,
+        'breathingEnabled': _breathingEnabled,
+        'pomodoroEnabled': _pomodoroEnabled,
       },
     );
   }

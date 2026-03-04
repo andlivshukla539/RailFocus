@@ -250,8 +250,8 @@ class _LuxeButtonState extends State<LuxeButton>
                           color: LuxeColors.gold.withValues(
                             alpha: 0.3 + _pulseController.value * 0.2,
                           ),
-                          blurRadius: 20 + _pulseController.value * 10,
-                          spreadRadius: _pulseController.value * 5,
+                          blurRadius: (20 + _pulseController.value * 10).clamp(0.0, 999.0),
+                          spreadRadius: (_pulseController.value * 5).clamp(0.0, 999.0),
                         ),
                       ]
                       : null,

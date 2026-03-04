@@ -642,7 +642,7 @@ class _TicketPhase extends StatelessWidget {
                                 color: accent.withValues(
                                   alpha: 0.15 + stamp * 0.25,
                                 ),
-                                blurRadius: 30 + stamp * 20,
+                                blurRadius: (30 + stamp * 20).clamp(0.0, 999.0),
                               ),
                             ],
                           ),

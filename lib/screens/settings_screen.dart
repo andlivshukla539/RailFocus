@@ -22,6 +22,7 @@ import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 import '../services/wakelock_service.dart';
 import '../router/app_router.dart';
+import '../widgets/breathing_exercise.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
@@ -135,7 +136,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                       const SizedBox(height: 20),
                       _buildAboutSection(),
                     const SizedBox(height: 20),
-                    _buildLogoutSection(),
+                    _buildFeaturesSection(),
+                  const SizedBox(height: 20),
+                  _buildLogoutSection(),
                     ],
                   ),
                 ),
@@ -570,6 +573,50 @@ class _SettingsScreenState extends State<SettingsScreen>
         _InfoTile(label: 'Version', value: '1.0.0'),
         _InfoTile(label: 'Theme', value: 'Luxe Rail — Obsidian & Gilt'),
         _InfoTile(label: 'Made with', value: '❤️ Flutter & Dart'),
+      ],
+    );
+  }
+
+  Widget _buildFeaturesSection() {
+    return _Section(
+      title: 'FEATURES',
+      icon: Icons.auto_awesome_rounded,
+      children: [
+        _FeatureTile(
+          emoji: '📊',
+          title: 'AI Focus Insights',
+          subtitle: 'Analytics, coaching & weekly report',
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.push(AppRouter.insights);
+          },
+        ),
+        const SizedBox(height: 8),
+        _FeatureTile(
+          emoji: '🚫',
+          title: 'App Blocker',
+          subtitle: 'Block distractions during focus',
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.push(AppRouter.appBlocker);
+          },
+        ),
+        const SizedBox(height: 8),
+        _FeatureTile(
+          emoji: '🧘',
+          title: 'Breathing Exercise',
+          subtitle: '4-7-8 breathing to calm your mind',
+          onTap: () {
+            HapticFeedback.lightImpact();
+            showGeneralDialog(
+              context: context,
+              barrierDismissible: false,
+              barrierColor: Colors.black87,
+              transitionDuration: const Duration(milliseconds: 400),
+              pageBuilder: (_, __, ___) => _BreathingDialog(),
+            );
+          },
+        ),
       ],
     );
   }
@@ -1032,6 +1079,92 @@ class _InfoTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FEATURE TILE
+// ═══════════════════════════════════════════════════════════════
+
+class _FeatureTile extends StatelessWidget {
+  final String emoji;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _FeatureTile({
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF131620),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFFD4A853).withValues(alpha: 0.1),
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.spaceMono(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFF5EDDB),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 12,
+                      color: const Color(0xFF706A5C),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: const Color(0xFF706A5C).withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BREATHING DIALOG
+// ═══════════════════════════════════════════════════════════════
+
+class _BreathingDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: BreathingExercise(
+        onComplete: () => Navigator.of(context).pop(),
+        onSkip: () => Navigator.of(context).pop(),
       ),
     );
   }

@@ -19,6 +19,8 @@ import '../screens/stats_screen.dart' show StatsScreen;
 import '../screens/break_screen.dart' show BreakScreen;
 import '../screens/share_card_screen.dart' show ShareCardScreen;
 import '../screens/passport_screen.dart' show PassportScreen;
+import '../screens/insights_screen.dart' show InsightsScreen;
+import '../screens/app_blocker_screen.dart' show AppBlockerScreen;
 import '../screens/auth/login_screen.dart' show LoginScreen; // ← ADD
 import '../screens/auth/register_screen.dart' show RegisterScreen; // ← ADD
 
@@ -41,6 +43,8 @@ class AppRouter {
   static const String login = '/login'; // ← ADD
   static const String register = '/register'; // ← ADD
   static const String passport = '/passport';
+  static const String insights = '/insights';
+  static const String appBlocker = '/app-blocker';
 
   static const String splashName = 'splash';
   static const String homeName = 'home';
@@ -58,6 +62,8 @@ class AppRouter {
   static const String loginName = 'login'; // ← ADD
   static const String registerName = 'register'; // ← ADD
   static const String passportName = 'passport';
+  static const String insightsName = 'insights';
+  static const String appBlockerName = 'appBlocker';
 }
 
 // ── (keep your entire TransitionType enum + _buildLuxeTransition unchanged) ──
@@ -426,6 +432,32 @@ late final GoRouter appRouter = GoRouter(
           ),
     ),
 
+    // ═══ INSIGHTS ═══
+    GoRoute(
+      path: AppRouter.insights,
+      name: AppRouter.insightsName,
+      pageBuilder:
+          (context, state) => _buildLuxeTransition(
+            context: context,
+            state: state,
+            child: const InsightsScreen(),
+            type: TransitionType.fadeSlideRight,
+          ),
+    ),
+
+    // ═══ APP BLOCKER ═══
+    GoRoute(
+      path: AppRouter.appBlocker,
+      name: AppRouter.appBlockerName,
+      pageBuilder:
+          (context, state) => _buildLuxeTransition(
+            context: context,
+            state: state,
+            child: const AppBlockerScreen(),
+            type: TransitionType.fadeSlideRight,
+          ),
+    ),
+
     // ═══ BREAK ═══
     GoRoute(
       path: AppRouter.breakStop,
@@ -610,6 +642,8 @@ extension NavigationExtension on BuildContext {
   void goToShareCard(Map<String, dynamic> data) =>
       push(AppRouter.shareCard, extra: data);
   void goToPassport() => push(AppRouter.passport);
+  void goToInsights() => push(AppRouter.insights);
+  void goToAppBlocker() => push(AppRouter.appBlocker);
   void goHome() => go(AppRouter.home);
   void goToLogin() => go(AppRouter.login); // ← ADD
 }
