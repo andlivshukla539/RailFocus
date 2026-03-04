@@ -21,6 +21,8 @@ import '../screens/share_card_screen.dart' show ShareCardScreen;
 import '../screens/passport_screen.dart' show PassportScreen;
 import '../screens/insights_screen.dart' show InsightsScreen;
 import '../screens/app_blocker_screen.dart' show AppBlockerScreen;
+import '../screens/dining_car_screen.dart' show DiningCarScreen;
+import '../screens/cabin_selection_screen.dart' show CabinSelectionScreen;
 import '../screens/auth/login_screen.dart' show LoginScreen; // ← ADD
 import '../screens/auth/register_screen.dart' show RegisterScreen; // ← ADD
 
@@ -45,6 +47,8 @@ class AppRouter {
   static const String passport = '/passport';
   static const String insights = '/insights';
   static const String appBlocker = '/app-blocker';
+  static const String diningCar = '/dining-car';
+  static const String cabinSelection = '/cabin-selection';
 
   static const String splashName = 'splash';
   static const String homeName = 'home';
@@ -64,6 +68,8 @@ class AppRouter {
   static const String passportName = 'passport';
   static const String insightsName = 'insights';
   static const String appBlockerName = 'appBlocker';
+  static const String diningCarName = 'diningCar';
+  static const String cabinSelectionName = 'cabinSelection';
 }
 
 // ── (keep your entire TransitionType enum + _buildLuxeTransition unchanged) ──
@@ -462,7 +468,7 @@ late final GoRouter appRouter = GoRouter(
           ),
     ),
 
-    // ═══ BREAK ═══
+    // ═══ BREAK / DINING CAR ═══
     GoRoute(
       path: AppRouter.breakStop,
       name: AppRouter.breakStopName,
@@ -471,7 +477,25 @@ late final GoRouter appRouter = GoRouter(
         return _buildLuxeTransition(
           context: context,
           state: state,
-          child: BreakScreen(
+          child: DiningCarScreen(
+            breakMinutes: data?['breakMinutes'] as int? ?? 5,
+            onResume: data?['onResume'] as VoidCallback?,
+          ),
+          type: TransitionType.fadeScale,
+        );
+      },
+    ),
+
+    // ═══ DINING CAR (direct route) ═══
+    GoRoute(
+      path: AppRouter.diningCar,
+      name: AppRouter.diningCarName,
+      pageBuilder: (context, state) {
+        final data = state.extra as Map<String, dynamic>?;
+        return _buildLuxeTransition(
+          context: context,
+          state: state,
+          child: DiningCarScreen(
             breakMinutes: data?['breakMinutes'] as int? ?? 5,
             onResume: data?['onResume'] as VoidCallback?,
           ),
@@ -511,6 +535,19 @@ late final GoRouter appRouter = GoRouter(
             context: context,
             state: state,
             child: const PassportScreen(),
+            type: TransitionType.fadeSlideUp,
+          ),
+    ),
+
+    // ═══ CABIN SELECTION ═══
+    GoRoute(
+      path: AppRouter.cabinSelection,
+      name: AppRouter.cabinSelectionName,
+      pageBuilder:
+          (context, state) => _buildLuxeTransition(
+            context: context,
+            state: state,
+            child: const CabinSelectionScreen(),
             type: TransitionType.fadeSlideUp,
           ),
     ),

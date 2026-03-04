@@ -19,6 +19,7 @@ import '../router/app_router.dart';
 import '../services/storage_service.dart';
 import '../services/audio_service.dart';
 import '../services/notification_service.dart';
+import '../services/cabin_service.dart';
 import '../services/timer_service.dart';
 import '../services/wakelock_service.dart';
 import '../widgets/audio_control.dart';
@@ -326,6 +327,10 @@ class _FocusScreenState extends State<FocusScreen>
   bool _soundPlaying = true; // Default to true as it auto-starts
   double _volume = 0.7;
 
+  // ── Cabin / co-working ─────────────────────────────────────
+  List<CabinPassenger> _cabinPassengers = [];
+  StreamSubscription<CabinModel?>? _cabinSub;
+
   double get _prog => (1.0 - _remSec / _totalSec).clamp(0.0, 1.0);
 
   Color get _activeAccent =>
@@ -413,6 +418,16 @@ class _FocusScreenState extends State<FocusScreen>
         routeName: _route.name,
         routeEmoji: _route.emoji,
       );
+
+      // Cabin: go active and subscribe to updates
+      CabinService.instance.setActive(true);
+      _cabinSub = CabinService.instance.currentCabinStream().listen((cabin) {
+        if (mounted && cabin != null) {
+          setState(() => _cabinPassengers = cabin.passengers);
+        } else if (mounted) {
+          setState(() => _cabinPassengers = []);
+        }
+      });
     });
   }
 
@@ -430,6 +445,9 @@ class _FocusScreenState extends State<FocusScreen>
     _eqCtrl.dispose();
     _progN.dispose();
     _remSecNotifier.dispose();
+    // Cabin: mark inactive
+    _cabinSub?.cancel();
+    CabinService.instance.setActive(false);
     super.dispose();
   }
 

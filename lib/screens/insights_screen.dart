@@ -625,51 +625,238 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   // ══════════════════════════════════════
-  // WEEKLY REPORT CARD
+  // WEEKLY CONDUCTOR'S REPORT CARD + OVERLAY
   // ══════════════════════════════════════
 
   Widget _buildWeeklyReportCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1A1A12), Color(0xFF131620)],
+    return GestureDetector(
+      onTap: () => _openConductorReport(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF241C08), Color(0xFF131308)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _P.brass.withValues(alpha: 0.35)),
+          boxShadow: [
+            BoxShadow(
+              color: _P.brass.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _P.brass.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text('📋', style: TextStyle(fontSize: 16)),
-              const SizedBox(width: 8),
-              Text(
-                'WEEKLY SUMMARY',
-                style: GoogleFonts.spaceMono(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: _P.brass,
-                  letterSpacing: 2,
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF0CC7A), Color(0xFFD4A853)],
                 ),
               ),
-            ],
+              child: const Center(
+                child: Text('📋', style: TextStyle(fontSize: 22)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'CONDUCTOR\'S REPORT',
+                    style: GoogleFonts.spaceMono(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: _P.brass,
+                      letterSpacing: 2.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'This week\'s journey analysis',
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 15,
+                      fontStyle: FontStyle.italic,
+                      color: _P.cream.withValues(alpha: 0.75),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.open_in_full_rounded, color: _P.brass.withValues(alpha: 0.7), size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openConductorReport(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ConductorReportOverlay(report: _weeklyReport),
+    );
+  }
+}
+
+// ══════════════════════════════════════
+// CONDUCTOR'S REPORT OVERLAY WIDGET
+// ══════════════════════════════════════
+class _ConductorReportOverlay extends StatelessWidget {
+  final String report;
+  const _ConductorReportOverlay({required this.report});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.82,
+      decoration: const BoxDecoration(
+        color: Color(0xFF0E0C08),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Drag handle
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4A853).withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-          const SizedBox(height: 14),
-          Text(
-            _weeklyReport,
-            style: GoogleFonts.cormorantGaramond(
-              fontSize: 15,
-              color: _P.cream.withValues(alpha: 0.85),
-              height: 1.4,
+          const SizedBox(height: 20),
+
+          // Newspaper header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: const Color(0xFFD4A853).withValues(alpha: 0.4))),
+                    const SizedBox(width: 12),
+                    Text(
+                      '★',
+                      style: TextStyle(
+                        color: const Color(0xFFD4A853).withValues(alpha: 0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: Divider(color: const Color(0xFFD4A853).withValues(alpha: 0.4))),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'THE LUXE RAIL GAZETTE',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFF5EDDB),
+                    letterSpacing: 3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Weekly Conductor\'s Report — Personal Edition',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: const Color(0xFF9A8E78),
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Divider(color: const Color(0xFFD4A853).withValues(alpha: 0.4)),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'FROM THE CONDUCTOR',
+                      style: GoogleFonts.spaceMono(
+                        fontSize: 7,
+                        color: const Color(0xFF9A8E78),
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    Text(
+                      _weekOf(),
+                      style: GoogleFonts.spaceMono(
+                        fontSize: 7,
+                        color: const Color(0xFF9A8E78),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Report body
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    report.isEmpty
+                        ? 'Your weekly journey analysis is being prepared...\n\nComplete a few more sessions and check back next week for a full conductor\'s report on your focus patterns.'
+                        : report,
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 18,
+                      color: const Color(0xFFF5EDDB).withValues(alpha: 0.88),
+                      height: 1.75,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Divider(color: const Color(0xFFD4A853).withValues(alpha: 0.2)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Text('🚂', style: TextStyle(fontSize: 14)),
+                      const SizedBox(width: 10),
+                      Text(
+                        'The journey continues next week.',
+                        style: GoogleFonts.cormorantGaramond(
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                          color: const Color(0xFF9A8E78),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _weekOf() {
+    final now = DateTime.now();
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    return 'Week of ${weekStart.day}/${weekStart.month}/${weekStart.year}';
   }
 }
