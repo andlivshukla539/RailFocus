@@ -223,6 +223,20 @@ late final GoRouter appRouter = GoRouter(
     // Splash is always allowed through — it handles its own navigation
     if (loc == AppRouter.splash) return null;
 
+    // ── Onboarding gate ──────────────────────────────────────────────────────
+    if (!onboardingCompleted) {
+      if (loc != AppRouter.onboarding) {
+        debugPrint('🚦 → redirecting to /onboarding');
+        return AppRouter.onboarding;
+      }
+      return null;
+    }
+
+    if (onboardingCompleted && loc == AppRouter.onboarding) {
+      debugPrint('🚦 → redirecting to home/login (onboarding done)');
+      return isAuthed ? AppRouter.home : AppRouter.login;
+    }
+
     // ── Auth gate ────────────────────────────────────────────────────────────
     if (!isAuthed && !isAuthRoute) {
       debugPrint('🚦 → redirecting to /login (not authed)');
@@ -230,16 +244,6 @@ late final GoRouter appRouter = GoRouter(
     }
     if (isAuthed && isAuthRoute) {
       debugPrint('🚦 → redirecting to / (authed, leaving auth route)');
-      return AppRouter.home;
-    }
-
-    // ── Onboarding gate ──────────────────────────────────────────────────────
-    if (!onboardingCompleted && loc != AppRouter.onboarding) {
-      debugPrint('🚦 → redirecting to /onboarding');
-      return AppRouter.onboarding;
-    }
-    if (onboardingCompleted && loc == AppRouter.onboarding) {
-      debugPrint('🚦 → redirecting to / (onboarding done)');
       return AppRouter.home;
     }
 

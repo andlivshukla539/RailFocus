@@ -260,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _showLevelUp = false;
   int _prevStationLevel = -1;
   String _aiTip = '';
+  String _passengerName = '';
 
   FocusMood get _focusMood {
     final today = DateTime.now();
@@ -325,6 +326,7 @@ class _HomeScreenState extends State<HomeScreen>
       final firstName = user.displayName!.split(' ').first;
       return 'Hi, $firstName 👋';
     }
+    if (_passengerName.isNotEmpty) return 'Hi, $_passengerName 👋';
     return 'Welcome, Traveller';
   }
 
@@ -407,6 +409,12 @@ class _HomeScreenState extends State<HomeScreen>
       // Load AI coach tip (async, non-blocking)
       AiCoachService.instance.getDailyCoachTip().then((tip) {
         if (mounted) setState(() => _aiTip = tip);
+      });
+
+      // Load passenger name set during onboarding (async, non-blocking)
+      SharedPreferences.getInstance().then((prefs) {
+        final name = prefs.getString('passenger_name') ?? '';
+        if (mounted && name.isNotEmpty) setState(() => _passengerName = name);
       });
 
       // Phase 8: Schedule streak warning if needed
