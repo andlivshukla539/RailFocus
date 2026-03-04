@@ -41,6 +41,7 @@ class _Ids {
   static const int sessionComplete = 0;
   static const int dailyReminder = 1;
   static const int streakAtRisk = 2;
+  static const int ongoingTimer = 3;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -466,5 +467,80 @@ class NotificationService {
   /// Returns a list of pending notification requests (for debugging).
   static Future<List<PendingNotificationRequest>> getPending() async {
     return await _plugin.pendingNotificationRequests();
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ONGOING TIMER NOTIFICATION (Android Live Focus Ticker)
+  // ══════════════════════════════════════════════════════════
+
+  /// Shows a persistent notification on Android that displays
+  /// a Golden Ticket–themed live countdown during a focus session.
+  ///
+  /// Call this at session start, then call it again every minute
+  /// to update the remaining time display.
+  ///
+  /// [remainingMinutes] — whole minutes remaining (e.g. 24)
+  /// [remainingSeconds] — seconds portion (e.g. 37)
+  /// [routeName] — e.g. "Tokyo to Kyoto"
+  /// [routeEmoji] — e.g. "🚄"
+  /// [totalMinutes] — total session duration for the progress bar
+  static Future<void> showOngoingTimer({
+    required int remainingMinutes,
+    required int remainingSeconds,
+    required String routeName,
+    String routeEmoji = '🚂',
+    int totalMinutes = 25,
+  }) async {
+    final elapsed = (totalMinutes * 60) -
+        (remainingMinutes * 60 + remainingSeconds);
+    final total = totalMinutes * 60;
+    final progress = (elapsed / total).clamp(0.0, 1.0);
+    final maxProgress = 100;
+    final currentProgress = (progress * maxProgress).round();
+
+    final timeStr =
+        '${remainingMinutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+
+    final androidDetails = AndroidNotificationDetails(
+      'focus_timer',
+      'Focus Timer',
+      channelDescription: 'Live countdown during a focus session',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      autoCancel: false,
+      showProgress: true,
+      maxProgress: maxProgress,
+      progress: currentProgress,
+      // Themed ticker text mimicking a departure board
+      ticker: '$routeEmoji $routeName ·  $timeStr remaining',
+      styleInformation: BigTextStyleInformation(
+        '$routeEmoji  $routeName\n🕐  $timeStr remaining',
+        summaryText: 'RailFocus — Focus Session Active',
+      ),
+      ledColor: const Color(0xFFD4A853),
+      ledOnMs: 1000,
+      ledOffMs: 500,
+      enableLights: true,
+      playSound: false,
+      enableVibration: false,
+    );
+
+    final details = NotificationDetails(android: androidDetails);
+
+    await _plugin.show(
+      id: _Ids.ongoingTimer,
+      title: '🎫  FIRST CLASS — Active Journey',
+      body: '$routeEmoji  $routeName  ·  $timeStr',
+      notificationDetails: details,
+      payload: 'ongoing_timer',
+    );
+  }
+
+  /// Dismisses the ongoing focus timer notification.
+  /// Call when the session ends or the user stops early.
+  static Future<void> cancelOngoingTimer() async {
+    await _plugin.cancel(id: _Ids.ongoingTimer);
+    debugPrint('🔔 NotificationService: Ongoing timer notification cancelled');
   }
 }

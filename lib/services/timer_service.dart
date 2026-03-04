@@ -111,6 +111,15 @@ class TimerService {
       emoji: routeEmoji,
     );
 
+    // Show the ongoing live-countdown notification in the status bar.
+    await NotificationService.showOngoingTimer(
+      remainingMinutes: durationMinutes,
+      remainingSeconds: 0,
+      routeName: routeName,
+      routeEmoji: routeEmoji,
+      totalMinutes: durationMinutes,
+    );
+
     debugPrint(
       '⏱️ TimerService: Started $durationMinutes min session'
       ' — ends at $_endTime',
@@ -186,6 +195,7 @@ class TimerService {
     await prefs.setBool(_keyStarted, false);
 
     await NotificationService.cancelSessionEnd();
+    await NotificationService.cancelOngoingTimer();
 
     debugPrint('⏱️ TimerService: Session ended');
   }
