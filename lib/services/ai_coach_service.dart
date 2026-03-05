@@ -22,7 +22,7 @@ class AiCoachService {
   GenerativeModel? _model;
   GenerativeModel get model {
     _model ??= GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       apiKey: ApiKeys.geminiApiKey,
       generationConfig: GenerationConfig(
         maxOutputTokens: 300,
