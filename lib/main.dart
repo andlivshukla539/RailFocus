@@ -86,7 +86,7 @@ void main() async {
   // ══════════════════════════════════════════════════════════
   // STEP 6: OPEN STORAGE BOXES
   // ══════════════════════════════════════════════════════════
-  await Future.wait([Hive.openBox('stats'), Hive.openBox('sessions')]);
+  await Future.wait([Hive.openBox('stats'), Hive.openBox('sessions'), Hive.openBox('projects')]);
 
   await AchievementService.init();
   debugPrint('✓ Storage initialized');

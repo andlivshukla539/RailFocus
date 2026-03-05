@@ -263,6 +263,7 @@ class _HomeScreenState extends State<HomeScreen>
   int _prevStationLevel = -1;
   String _aiTip = '';
   String _passengerName = '';
+  Map<String, dynamic>? _aiSuggestion;
 
   FocusMood get _focusMood {
     final today = DateTime.now();
@@ -408,6 +409,11 @@ class _HomeScreenState extends State<HomeScreen>
       });
       _counter.forward(from: 0);
 
+      // Smart AI suggestion (async, non-blocking)
+      AiCoachService.instance.getSmartSuggestion().then((s) {
+        if (mounted) setState(() => _aiSuggestion = s);
+      });
+
       // Load AI coach tip (async, non-blocking)
       AiCoachService.instance.getDailyCoachTip().then((tip) {
         if (mounted) setState(() => _aiTip = tip);
@@ -536,6 +542,18 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
 
                           const SizedBox(height: 28),
+
+                          // AI SMART SUGGESTION
+                          if (_aiSuggestion != null)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                              child: _AiSuggestionBanner(
+                                suggestion: _aiSuggestion!,
+                                accent: _scene.accent,
+                              ),
+                            ).animate(delay: 200.ms).fadeIn(duration: 500.ms),
+
+                          if (_aiSuggestion != null) const SizedBox(height: 16),
 
                           // STATS DEPARTURE BOARD
                           _DepartureBoardStats(
@@ -3301,6 +3319,81 @@ class _PassengerCabinCard extends StatelessWidget {
               Icons.chevron_right_rounded,
               color: Color(0xFFD4A853),
               size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// AI SMART SUGGESTION BANNER
+// Appears when Gemini detects the user is in their peak focus window.
+// ════════════════════════════════════════════════════════════════
+
+class _AiSuggestionBanner extends StatelessWidget {
+  final Map<String, dynamic> suggestion;
+  final Color accent;
+
+  const _AiSuggestionBanner({required this.suggestion, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        context.push(AppRouter.booking);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: LinearGradient(
+            colors: [
+              accent.withValues(alpha: 0.12),
+              const Color(0xFF0E1018),
+            ],
+          ),
+          border: Border.all(color: accent.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Text('🤖', style: TextStyle(fontSize: 22)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    suggestion['title'] as String? ?? 'Now is a great time to focus',
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 15, fontWeight: FontWeight.w700,
+                      color: const Color(0xFFF5EDDB),
+                    ),
+                  ),
+                  Text(
+                    suggestion['reason'] as String? ?? 'Your peak focus window is open',
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 12, fontStyle: FontStyle.italic,
+                      color: const Color(0xFF9A8E78),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: accent.withValues(alpha: 0.15),
+              ),
+              child: Text(
+                '${suggestion['durationMinutes']}m',
+                style: GoogleFonts.spaceMono(
+                  fontSize: 10, color: accent, fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),

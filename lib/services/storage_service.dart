@@ -746,4 +746,80 @@ class StorageService {
       return {};
     }
   }
+
+  // ══════════════════════════════════════
+  // FOCUS PROJECTS
+  // ══════════════════════════════════════
+
+  Box get _projectsBox => Hive.box('projects');
+
+  /// Returns all saved projects.
+  List<Map<String, dynamic>> getProjects() {
+    try {
+      return _projectsBox.values
+          .map((v) => Map<String, dynamic>.from(v as Map))
+          .toList();
+    } catch (e) {
+      debugPrint('⚠️ Storage error getProjects: $e');
+      return [];
+    }
+  }
+
+  /// Saves (or updates) a project by its id.
+  void saveProject(Map<String, dynamic> projectMap) {
+    try {
+      _projectsBox.put(projectMap['id'], projectMap);
+    } catch (e) {
+      debugPrint('⚠️ Storage error saveProject: $e');
+    }
+  }
+
+  /// Deletes a project by id.
+  void deleteProject(String id) {
+    try {
+      _projectsBox.delete(id);
+    } catch (e) {
+      debugPrint('⚠️ Storage error deleteProject: $e');
+    }
+  }
+
+  /// Returns total completed minutes grouped by projectId for the
+  /// last [days] days. Used in the Insights project breakdown chart.
+  Map<String, int> getProjectMinutes({int days = 30}) {
+    try {
+      final cutoff = DateTime.now().subtract(Duration(days: days));
+      final result = <String, int>{};
+      for (final s in getAllSessions()) {
+        if (!s.completed) continue;
+        if (s.startTime.isBefore(cutoff)) continue;
+        final pid = s.category ?? 'uncategorized';
+        result[pid] = (result[pid] ?? 0) + s.durationMinutes;
+      }
+      return result;
+    } catch (e) {
+      return {};
+    }
+  }
+
+  // ══════════════════════════════════════
+  // VOICE REFLECTION
+  // ══════════════════════════════════════
+
+  /// Saves a reflection text for an existing session (identified by id).
+  void saveReflection(String sessionId, String reflection) {
+    try {
+      final box = _sessionsBox;
+      for (int i = 0; i < box.length; i++) {
+        final raw = Map<String, dynamic>.from(box.getAt(i) as Map);
+        if (raw['id'] == sessionId) {
+          raw['reflection'] = reflection;
+          box.putAt(i, raw);
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Storage error saveReflection: $e');
+    }
+  }
 }
+

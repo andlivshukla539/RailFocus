@@ -74,6 +74,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/route_model.dart';
 import '../router/app_router.dart';
 import '../services/audio_service.dart';
+import '../services/ai_coach_service.dart';
+import '../models/focus_project.dart';
+import '../services/storage_service.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  PALETTE
@@ -160,6 +163,9 @@ class _BookingScreenState extends State<BookingScreen>
   DurationOption? _dur;
   bool _breathingEnabled = true;
   bool _pomodoroEnabled = false;
+  int _pomodoroRounds = 2;
+  String? _selectedProjectId;
+  Map<String, dynamic>? _aiSuggestion;
 
   @override
   void initState() {
@@ -214,9 +220,7 @@ class _BookingScreenState extends State<BookingScreen>
   Color get _accent => _route?.accentColor ?? _C.gold;
 
   void _confirm() {
-    if (_route == null || _dur == null) {
-      return;
-    }
+    if (_route == null || _dur == null) return;
     AudioService().playImportantClick();
     AudioService().playTicketStamp();
     HapticFeedback.heavyImpact();
@@ -229,6 +233,8 @@ class _BookingScreenState extends State<BookingScreen>
         'durationMinutes': _dur!.minutes,
         'breathingEnabled': _breathingEnabled,
         'pomodoroEnabled': _pomodoroEnabled,
+        'pomodoroRounds': _pomodoroRounds,
+        'projectId': _selectedProjectId,
       },
     );
   }
@@ -851,7 +857,13 @@ class _RouteStepState extends State<_RouteStep> {
             },
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+
+        // ── ✨ AI Route Generator ─────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+          child: _AiRouteButton(onRouteGenerated: widget.onSelect),
+        ),
       ],
     );
   }
@@ -2618,3 +2630,179 @@ class _BarcodePainter extends CustomPainter {
   @override
   bool shouldRepaint(_BarcodePainter _) => false;
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  AI ROUTE GENERATOR BUTTON
+//  Shown at the bottom of the route step. Tapping opens a mood
+//  picker, calls Gemini, and presents the fictional route as a
+//  selectable route card.
+// ═══════════════════════════════════════════════════════════════
+
+class _AiRouteButton extends StatefulWidget {
+  final void Function(RouteModel) onRouteGenerated;
+  const _AiRouteButton({required this.onRouteGenerated});
+
+  @override
+  State<_AiRouteButton> createState() => _AiRouteButtonState();
+}
+
+class _AiRouteButtonState extends State<_AiRouteButton> {
+  bool _loading = false;
+  Map<String, dynamic>? _generated;
+
+  static const _moods = [
+    '😌 Calm', '🔥 Energised', '🌧️ Melancholy',
+    '🤩 Inspired', '😤 Focused', '🌙 Dreamy',
+  ];
+
+  Future<void> _generate() async {
+    final mood = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF0E1018),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('What\'s your mood?',
+              style: GoogleFonts.cormorantGaramond(
+                fontSize: 22, fontWeight: FontWeight.w700,
+                color: const Color(0xFFF5EDDB),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10, runSpacing: 10,
+              children: _moods.map((m) => GestureDetector(
+                onTap: () => Navigator.pop(context, m),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF191C28),
+                    border: Border.all(color: const Color(0xFFD4A853).withValues(alpha: 0.2)),
+                  ),
+                  child: Text(m, style: GoogleFonts.spaceMono(
+                    fontSize: 12, color: const Color(0xFF9A8E7A),
+                  )),
+                ),
+              )).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (mood == null || !mounted) return;
+    setState(() { _loading = true; _generated = null; });
+
+    final result = await AiCoachService.instance.generateRoute(mood);
+    if (!mounted) return;
+
+    if (result == null) {
+      setState(() => _loading = false);
+      return;
+    }
+
+    setState(() { _loading = false; _generated = result; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_generated != null) {
+      // Show the generated route as a tappable card
+      return GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          final r = RouteModel(
+            id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+            name: _generated!['name'] as String,
+            tagline: _generated!['tagline'] as String,
+            description: _generated!['tagline'] as String,
+            emoji: _generated!['emoji'] as String,
+            accentColor: const Color(0xFF9B85D4),
+            landscapeGradient: const [Color(0xFF1A1535), Color(0xFF2A2050), Color(0xFF3A3060)],
+            skyGradient: const [Color(0xFF0A0A1A), Color(0xFF1A1030), Color(0xFF9B85D4)],
+            atmosphere: 'clear',
+            estimatedRealDuration: const Duration(hours: 3),
+          );
+          widget.onRouteGenerated(r);
+          setState(() => _generated = null);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1A1535), Color(0xFF131620)],
+            ),
+            border: Border.all(color: const Color(0xFF9B85D4).withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            children: [
+              Text(_generated!['emoji'] as String,
+                style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_generated!['name'] as String,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: 17, fontWeight: FontWeight.w700,
+                        color: const Color(0xFFF5EDDB),
+                      ),
+                    ),
+                    Text(_generated!['tagline'] as String,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: 12, color: const Color(0xFF9A8E7A),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.check_circle_rounded,
+                color: Color(0xFF9B85D4), size: 20),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _loading ? null : _generate,
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFD4A853).withValues(alpha: 0.18)),
+          color: const Color(0xFF0D0F18),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_loading)
+              const SizedBox(width: 18, height: 18,
+                child: CircularProgressIndicator(
+                  color: Color(0xFFD4A853), strokeWidth: 2))
+            else ...[
+              const Text('✨', style: TextStyle(fontSize: 16)),
+              const SizedBox(width: 8),
+              Text('GENERATE A ROUTE',
+                style: GoogleFonts.spaceMono(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  color: const Color(0xFFD4A853), letterSpacing: 2,
+                )),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
