@@ -483,36 +483,6 @@ Return JSON only:
     }
   }
 
-  // ══════════════════════════════════════
-  // AI ROUTE GENERATOR
-  // ══════════════════════════════════════
-
-  /// Generates a fictional luxury train route based on the user's mood.
-  /// Returns {name, emoji, tagline} or null on error.
-  Future<Map<String, dynamic>?> generateRoute(String mood) async {
-    try {
-      final prompt = '''
-Create a fictional luxury train route inspired by mood: "$mood".
-Return JSON ONLY:
-{"name": "City A to City B", "emoji": "🚄", "tagline": "short poetic description"}
-''';
-      final rawText = await _safeGenerate(prompt);
-      if (rawText == null || rawText.isEmpty) return null;
-      final clean = rawText.replaceAll(RegExp(r'```[a-z]*\n?'), '').trim();
-      final nameMatch = RegExp(r'"name"\s*:\s*"([^"]+)"').firstMatch(clean);
-      final emojiMatch = RegExp(r'"emoji"\s*:\s*"([^"]+)"').firstMatch(clean);
-      final tagMatch = RegExp(r'"tagline"\s*:\s*"([^"]+)"').firstMatch(clean);
-      if (nameMatch == null) return null;
-      return {
-        'name': nameMatch.group(1)!,
-        'emoji': emojiMatch?.group(1) ?? '✨',
-        'tagline': tagMatch?.group(1) ?? 'A journey beyond imagination',
-      };
-    } catch (e) {
-      debugPrint('🔴 AI route generator error: $e');
-      return null;
-    }
-  }
 
   // ══════════════════════════════════════
   // VOICE REFLECTION SUMMARISER
