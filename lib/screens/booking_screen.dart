@@ -1651,7 +1651,7 @@ class _GoalChipState extends State<_GoalChip>
 //  STEP 4 — DURATION
 // ═══════════════════════════════════════════════════════════════
 
-class _DurationStep extends StatelessWidget {
+class _DurationStep extends StatefulWidget {
   final DurationOption? selected;
   final Color accent;
   final void Function(DurationOption) onSelect;
@@ -1663,12 +1663,72 @@ class _DurationStep extends StatelessWidget {
   });
 
   @override
+  State<_DurationStep> createState() => _DurationStepState();
+}
+
+class _DurationStepState extends State<_DurationStep> {
+  Map<String, dynamic>? _aiRec;
+
+  @override
+  void initState() {
+    super.initState();
+    AiCoachService.instance.getAdaptiveSessionLength().then((rec) {
+      if (mounted) setState(() => _aiRec = rec);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final durs = DurationOption.allDurations;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _StepTitle(pre: 'Choose your', title: 'Focus Window'),
+
+        // ── 🤖 AI Adaptive Pill ──────────────────────────────
+        if (_aiRec != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                final mins = _aiRec!['minutes'] as int? ?? 25;
+                final match = durs.firstWhere(
+                  (d) => d.minutes == mins,
+                  orElse: () => durs[1],
+                );
+                widget.onSelect(match);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: widget.accent.withValues(alpha: 0.08),
+                  border: Border.all(color: widget.accent.withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  children: [
+                    const Text('🤖', style: TextStyle(fontSize: 14)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'AI suggests ${_aiRec!['minutes']}min · ${_aiRec!['reason']}',
+                        style: GoogleFonts.spaceMono(
+                          fontSize: 10,
+                          color: widget.accent,
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(Icons.touch_app_rounded, color: widget.accent, size: 14),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -1678,14 +1738,14 @@ class _DurationStep extends StatelessWidget {
             itemCount: durs.length,
             itemBuilder: (_, i) {
               final d = durs[i];
-              final sel = selected?.minutes == d.minutes;
+              final sel = widget.selected?.minutes == d.minutes;
               return _DurTile(
                 dur: d,
                 sel: sel,
-                accent: accent,
+                accent: widget.accent,
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  onSelect(d);
+                  widget.onSelect(d);
                 },
               );
             },

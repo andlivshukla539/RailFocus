@@ -24,6 +24,7 @@ import '../models/session_model.dart';
 import '../router/app_router.dart';
 import '../services/storage_service.dart';
 import '../services/achievement_service.dart';
+import '../services/ai_coach_service.dart';
 import '../widgets/achievement_popup.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -119,6 +120,23 @@ class _ArrivalScreenState extends State<ArrivalScreen>
   final _noteFocus = FocusNode();
   final _audio = AudioService();
   bool _noteSaved = false;
+  bool _aiReflecting = false;
+
+  Future<void> _aiReflect() async {
+    final raw = _noteController.text.trim();
+    if (raw.isEmpty) {
+      // If note is empty, seed it with a generic prompt for Gemini
+      _noteController.text = 'had a good session';
+    }
+    setState(() => _aiReflecting = true);
+    final routeName = _lastSession?.routeName ?? 'the journey';
+    final polished = await AiCoachService.instance.getVoiceReflection(
+      _noteController.text.trim(), routeName,
+    );
+    if (!mounted) return;
+    _noteController.text = polished;
+    setState(() { _aiReflecting = false; _noteSaved = false; });
+  }
 
   @override
   void initState() {
@@ -859,28 +877,62 @@ class _ArrivalScreenState extends State<ArrivalScreen>
 
             const SizedBox(height: 12),
 
-            // Save button
-            GestureDetector(
-              onTap: _saveNote,
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: _P.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _P.brass.withValues(alpha: 0.2)),
-                ),
-                child: Center(
-                  child: Text(
-                    'SAVE NOTE',
-                    style: GoogleFonts.spaceMono(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _P.brass,
-                      letterSpacing: 2,
+            // Save button row
+            Row(
+              children: [
+                // ── ✨ AI Reflect ──────────────────────────────
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _aiReflect,
+                    child: Container(
+                      height: 40,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: _P.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _P.brass.withValues(alpha: 0.3)),
+                      ),
+                      child: Center(
+                        child: _aiReflecting
+                          ? const SizedBox(width: 16, height: 16,
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFD4A853), strokeWidth: 2))
+                          : Text(
+                              '✨ AI REFLECT',
+                              style: GoogleFonts.spaceMono(
+                                fontSize: 9, fontWeight: FontWeight.w700,
+                                color: _P.brass, letterSpacing: 1.5,
+                              ),
+                            ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                // ── SAVE NOTE ─────────────────────────────────
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _saveNote,
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _P.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _P.brass.withValues(alpha: 0.2)),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _noteSaved ? '✓ SAVED' : 'SAVE NOTE',
+                          style: GoogleFonts.spaceMono(
+                            fontSize: 10, fontWeight: FontWeight.w700,
+                            color: _noteSaved ? _P.success : _P.brass,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -890,11 +942,11 @@ class _ArrivalScreenState extends State<ArrivalScreen>
 
   void _saveNote() {
     if (_noteController.text.trim().isEmpty) return;
-
     HapticFeedback.lightImpact();
-
-    // TODO: Save note to session
-    // For now, just show confirmation
+    // Persist note to the most recent session
+    if (_lastSession != null) {
+      _storage.saveReflection(_lastSession!.id, _noteController.text.trim());
+    }
     setState(() => _noteSaved = true);
     _noteFocus.unfocus();
   }
