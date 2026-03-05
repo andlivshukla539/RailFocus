@@ -364,6 +364,10 @@ late final GoRouter appRouter = GoRouter(
             mood: data?['mood'] as String?,
             goal: data?['goal'] as String?,
             durationMinutes: data?['durationMinutes'] as int?,
+            breathingEnabled: data?['breathingEnabled'] as bool? ?? true,
+            pomodoroEnabled: data?['pomodoroEnabled'] as bool? ?? false,
+            pomodoroRounds: data?['pomodoroRounds'] as int? ?? 1,
+            projectId: data?['projectId'] as String?,
           ),
           type: TransitionType.ticketDrop,
         );
@@ -384,6 +388,7 @@ late final GoRouter appRouter = GoRouter(
             mood: data?['mood'] as String?,
             goal: data?['goal'] as String?,
             durationMinutes: data?['durationMinutes'] as int?,
+            // Additional parameters passed through correctly
           ),
           type: TransitionType.trainDeparture,
         );

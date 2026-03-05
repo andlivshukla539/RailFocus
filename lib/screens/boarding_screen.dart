@@ -87,6 +87,10 @@ class BoardingRitualScreen extends StatefulWidget {
   final String? mood;
   final String? goal;
   final int? durationMinutes;
+  final bool breathingEnabled;
+  final bool pomodoroEnabled;
+  final int pomodoroRounds;
+  final String? projectId;
 
   const BoardingRitualScreen({
     super.key,
@@ -94,6 +98,10 @@ class BoardingRitualScreen extends StatefulWidget {
     this.mood,
     this.goal,
     this.durationMinutes,
+    this.breathingEnabled = true,
+    this.pomodoroEnabled = false,
+    this.pomodoroRounds = 4,
+    this.projectId,
   });
 
   @override
@@ -246,6 +254,10 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
           'mood': widget.mood,
           'goal': widget.goal,
           'durationMinutes': widget.durationMinutes,
+          'breathingEnabled': widget.breathingEnabled,
+          'pomodoroEnabled': widget.pomodoroEnabled,
+          'pomodoroRounds': widget.pomodoroRounds,
+          'projectId': widget.projectId,
         },
       );
     }

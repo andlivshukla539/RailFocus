@@ -116,32 +116,25 @@ class _SettingsScreenState extends State<SettingsScreen>
               final opacity = _enterCtrl.value.clamp(0.0, 1.0);
               return Opacity(opacity: opacity, child: child);
             },
-            child: Column(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+              physics: const BouncingScrollPhysics(),
               children: [
-                const SizedBox(height: 12),
                 _buildHeader(),
                 const SizedBox(height: 16),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      _buildSoundSection(),
-                      const SizedBox(height: 20),
-                      _buildDisplaySection(),
-                      const SizedBox(height: 20),
-                      _buildNotificationSection(),
-                      const SizedBox(height: 20),
-                      _buildDataSection(),
-                      const SizedBox(height: 20),
-                      _buildAboutSection(),
-                    const SizedBox(height: 20),
-                    _buildFeaturesSection(),
-                  const SizedBox(height: 20),
-                  _buildLogoutSection(),
-                    ],
-                  ),
-                ),
+                _buildSoundSection(),
+                const SizedBox(height: 20),
+                _buildDisplaySection(),
+                const SizedBox(height: 20),
+                _buildNotificationSection(),
+                const SizedBox(height: 20),
+                _buildDataSection(),
+                const SizedBox(height: 20),
+                _buildAboutSection(),
+                const SizedBox(height: 20),
+                _buildFeaturesSection(),
+                const SizedBox(height: 20),
+                _buildLogoutSection(),
               ],
             ),
           ),
@@ -153,11 +146,9 @@ class _SettingsScreenState extends State<SettingsScreen>
   // ── Header ─────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          GestureDetector(
+    return Row(
+      children: [
+        GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
               context.pop();

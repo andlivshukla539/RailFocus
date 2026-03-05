@@ -30,6 +30,16 @@ class AiCoachService {
     return _model!;
   }
 
+  // ── Cache ──────────────────────────────────────────
+  String? _cachedTip;
+  DateTime? _lastTipTime;
+
+  Map<String, dynamic>? _cachedSmartSuggestion;
+  DateTime? _lastSmartSuggestionTime;
+
+  Map<String, dynamic>? _cachedAdaptiveLength;
+  DateTime? _lastAdaptiveLengthTime;
+
   // ══════════════════════════════════════
   // BUILD CONTEXT (user data summary)
   // ══════════════════════════════════════
@@ -292,6 +302,12 @@ Use 2-3 emojis total. Keep the whole thing under 80 words.
   /// current hour is within ±1 hour of the user's peak focus time.
   /// Returns null if no suggestion is warranted right now.
   Future<Map<String, dynamic>?> getSmartSuggestion() async {
+    final now = DateTime.now();
+    if (_cachedSmartSuggestion != null && _lastSmartSuggestionTime != null && 
+        now.difference(_lastSmartSuggestionTime!).inHours < 4) {
+      return _cachedSmartSuggestion;
+    }
+
     try {
       final context = _buildUserContext();
       final now = DateTime.now();
@@ -322,6 +338,9 @@ If now is NOT a good time, respond with exactly: null
       map['title'] = titleMatch.group(1)!;
       map['reason'] = reasonMatch?.group(1) ?? 'Your peak focus window is open';
       map['durationMinutes'] = int.tryParse(durMatch?.group(1) ?? '25') ?? 25;
+      
+      _cachedSmartSuggestion = map;
+      _lastSmartSuggestionTime = now;
       return map;
     } catch (e) {
       debugPrint('🔴 AI smart suggestion error: $e');
@@ -336,6 +355,12 @@ If now is NOT a good time, respond with exactly: null
   /// Looks at the last 10 completed sessions and suggests an optimal
   /// session length. Returns {minutes, reason} or null on error.
   Future<Map<String, dynamic>?> getAdaptiveSessionLength() async {
+    final now = DateTime.now();
+    if (_cachedAdaptiveLength != null && _lastAdaptiveLengthTime != null && 
+        now.difference(_lastAdaptiveLengthTime!).inHours < 12) {
+      return _cachedAdaptiveLength;
+    }
+
     try {
       final sessions = _storage.getAllSessions().take(10).toList();
       if (sessions.isEmpty) return null;

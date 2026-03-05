@@ -337,39 +337,43 @@ class _HistoryScreenState extends State<HistoryScreen>
 
             // Layer 2: Main content
             SafeArea(
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-
-                  // Header with back button
-                  _buildHeader(),
-
-                  const SizedBox(height: 20),
-
-                  // Stats summary
-                  _buildStatsSummary(),
-
-                  const SizedBox(height: 16),
-
-                  // Heatmap calendar
-                  _FocusHeatmap(data: _heatmapData),
-
-                  const SizedBox(height: 16),
-
-                  // Filters
-                  _buildFilters(),
-
-                  const SizedBox(height: 16),
-
-                  // Journey list
-                  Expanded(
-                    child:
-                        _isLoading
-                            ? const ShimmerList(itemCount: 4, itemHeight: 90)
-                            : _filteredSessions.isEmpty
-                            ? _buildEmptyState()
-                            : _buildJourneyList(),
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 12),
+                        // Header with back button
+                        _buildHeader(),
+                        const SizedBox(height: 20),
+                        // Stats summary
+                        _buildStatsSummary(),
+                        const SizedBox(height: 16),
+                        // Heatmap calendar
+                        _FocusHeatmap(data: _heatmapData),
+                        const SizedBox(height: 16),
+                        // Filters
+                        _buildFilters(),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
+                  
+                  // Journey list
+                  if (_isLoading)
+                    const SliverFillRemaining(
+                      child: ShimmerList(itemCount: 4, itemHeight: 90),
+                    )
+                  else if (_filteredSessions.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildEmptyState(),
+                    )
+                  else
+                    SliverFillRemaining(
+                      child: _buildJourneyList(),
+                    ),
                 ],
               ),
             ),

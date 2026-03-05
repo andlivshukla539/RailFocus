@@ -278,6 +278,10 @@ class FocusScreen extends StatefulWidget {
   final String? mood;
   final String? goal;
   final int? durationMinutes;
+  final bool breathingEnabled;
+  final bool pomodoroEnabled;
+  final int pomodoroRounds;
+  final String? projectId;
 
   const FocusScreen({
     super.key,
@@ -285,6 +289,10 @@ class FocusScreen extends StatefulWidget {
     this.mood,
     this.goal,
     this.durationMinutes,
+    this.breathingEnabled = true,
+    this.pomodoroEnabled = false,
+    this.pomodoroRounds = 1,
+    this.projectId,
   });
 
   @override
@@ -666,6 +674,7 @@ class _FocusScreenState extends State<FocusScreen>
         completed: completed,
         mood: widget.mood,
         goal: _goal,
+        category: widget.projectId, // Save the focus project ID
       ),
     );
     if (mounted) {
