@@ -22,11 +22,11 @@ class AiCoachService {
   GenerativeModel? _model;
   GenerativeModel get model {
     _model ??= GenerativeModel(
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       apiKey: ApiKeys.geminiApiKey,
       generationConfig: GenerationConfig(
-        maxOutputTokens: 300,
-        temperature: 0.8,
+        maxOutputTokens: 200,
+        temperature: 0.7,
       ),
     );
     return _model!;
@@ -35,7 +35,8 @@ class AiCoachService {
   // ── Mutex & Rate Limiting ────────────────────────────
   bool _isRequestInProgress = false;
   DateTime? _lastApiCall;
-  static const Duration _rateLimit = Duration(seconds: 3);
+  // 5 seconds between calls keeps us safely under the 5 RPM free-tier limit
+  static const Duration _rateLimit = Duration(seconds: 5);
 
   /// Checks if we've waited long enough since the last AI call
   bool _canCallApi() {
