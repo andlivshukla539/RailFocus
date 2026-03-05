@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class StreakCalendar extends StatelessWidget {
-  /// Map<dayKey, focusMinutes> e.g. {"2026-03-04": 45, ...}
+  /// Map of `dayKey` to `focusMinutes` e.g. {"2026-03-04": 45, ...}
   final Map<String, int> focusData;
 
   const StreakCalendar({

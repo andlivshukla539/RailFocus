@@ -21,7 +21,6 @@ import '../widgets/sound_mixer.dart';
 // ═══════════════════════════════════════════════════════════════
 
 class _C {
-  static const ink = Color(0xFF07090F);
   static const panel = Color(0xFF131620);
   static const surface = Color(0xFF1A1E2C);
   static const brass = Color(0xFFD4A853);

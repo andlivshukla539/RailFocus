@@ -5,7 +5,7 @@
 //  Auto-dismisses after 3.5s or on tap.
 // ═══════════════════════════════════════════════════════════════
 
-import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -57,17 +57,6 @@ class _AchievementOverlayState extends State<_AchievementOverlay>
   late final AnimationController _enterCtrl;
   late final AnimationController _glowCtrl;
   late final AnimationController _exitCtrl;
-
-  // Sparkle particles
-  final _sparkles = List.generate(20, (i) {
-    final rng = math.Random(i * 41 + 7);
-    return _Sparkle(
-      angle: rng.nextDouble() * math.pi * 2,
-      speed: 0.5 + rng.nextDouble() * 1.5,
-      size: 2.0 + rng.nextDouble() * 4.0,
-      delay: rng.nextDouble() * 0.3,
-    );
-  });
 
   @override
   void initState() {
@@ -265,12 +254,3 @@ class _AchievementOverlayState extends State<_AchievementOverlay>
   }
 }
 
-class _Sparkle {
-  final double angle, speed, size, delay;
-  const _Sparkle({
-    required this.angle,
-    required this.speed,
-    required this.size,
-    required this.delay,
-  });
-}

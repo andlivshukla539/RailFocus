@@ -20,11 +20,9 @@ import '../services/storage_service.dart';
 
 abstract class _P {
   static const bg = Color(0xFF06070E);
-  static const card = Color(0xFF0A0C16);
   static const surface = Color(0xFF111320);
   static const rim = Color(0xFF1C1F2E);
   static const gold = Color(0xFFD4A855);
-  static const goldLt = Color(0xFFEDCB80);
   static const cream = Color(0xFFEDE6D8);
   static const muted = Color(0xFF706A5C);
   static const copper = Color(0xFFB8824A);
@@ -97,11 +95,11 @@ class _ShareCardScreenState extends State<ShareCardScreen>
       await file.writeAsBytes(pngBytes);
 
       // Share
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text:
-            '🚂 Just completed a ${widget.durationMinutes}min focus journey on ${widget.routeName}! #RailFocus',
-      );
+      await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path)],
+      text:
+          '🚂 Just completed a ${widget.durationMinutes}min focus journey on ${widget.routeName}! #RailFocus',
+    ));
     } catch (e) {
       debugPrint('Share error: $e');
       if (mounted) {

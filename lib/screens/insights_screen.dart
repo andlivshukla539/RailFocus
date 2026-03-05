@@ -49,7 +49,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   // Data
   int _streak = 0;
   double _totalHours = 0;
-  int _totalSessions = 0;
+
   int _todayMinutes = 0;
   List<int> _hourlyData = List.filled(24, 0);
   List<int> _weeklyData = List.filled(7, 0);
@@ -75,7 +75,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     setState(() {
       _streak = _storage.getStreak();
       _totalHours = _storage.getTotalHours();
-      _totalSessions = _storage.getTotalSessions();
+
       _todayMinutes = _storage.getTodayMinutes();
 
       // Hourly distribution
@@ -396,7 +396,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                '⚡ Peak: ${peakHour}:00 (${_hourlyData[peakHour]} min)',
+                '⚡ Peak: $peakHour:00 (${_hourlyData[peakHour]} min)',
                 style: GoogleFonts.spaceMono(
                   fontSize: 10,
                   color: _P.brass,

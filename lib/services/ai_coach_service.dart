@@ -142,7 +142,7 @@ Today: ${todayMinutes}m ($todaySessions sessions)
 Bricks: $bricks
 Station: $stationLevel/10
 Avg Session: ${avgMinutes}m
-Peak Hour: ${peakHour}:00
+Peak Hour: $peakHour:00
 Peak Day: ${dayNames[peakDay]}
 Fav Route: $favRoute ($favMins m)
 Recent Moods: ${recentMoods.isEmpty ? 'none' : recentMoods.join(', ')}

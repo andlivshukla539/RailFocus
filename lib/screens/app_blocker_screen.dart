@@ -23,7 +23,6 @@ class _P {
   static const cream = Color(0xFFF5EDDB);
   static const muted = Color(0xFF706A5C);
   static const red = Color(0xFFEF5350);
-  static const green = Color(0xFF4CAF50);
 }
 
 class AppBlockerScreen extends StatefulWidget {

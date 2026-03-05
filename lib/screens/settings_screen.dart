@@ -41,7 +41,6 @@ class _S {
   static const t2 = Color(0xFF9A8E78);
   static const t3 = Color(0xFF564E40);
   static const danger = Color(0xFFB83838);
-  static const success = Color(0xFF4CAF50);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -510,7 +509,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                               HapticFeedback.heavyImpact();
                               _storage.clearAll();
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(this.context).showSnackBar(
+                              ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
                                     'All journey data cleared',

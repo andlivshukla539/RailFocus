@@ -27,20 +27,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _setError(String msg) {
-    if (mounted)
+    if (mounted) {
       setState(() {
         _error = msg;
         _loading = false;
       });
+    }
   }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
-    if (mounted)
+    if (mounted) {
       setState(() {
         _loading = true;
         _error = null;
       });
+    }
     try {
       await AuthService.instance.registerWithEmail(
         email: _emailCtrl.text,
@@ -129,8 +131,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty)
+                        if (v == null || v.trim().isEmpty) {
                           return 'Email is required';
+                        }
                         if (!v.contains('@')) return 'Enter a valid email';
                         return null;
                       },
@@ -164,10 +167,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.isEmpty)
+                        if (v == null || v.isEmpty) {
                           return 'Password is required';
-                        if (v.length < 6)
+                        }
+                        if (v.length < 6) {
                           return 'Password must be at least 6 characters';
+                        }
                         return null;
                       },
                     ),

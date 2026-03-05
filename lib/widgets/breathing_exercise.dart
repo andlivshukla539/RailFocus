@@ -5,12 +5,9 @@
 //  4-7-8 breathing: Inhale 4s, Hold 7s, Exhale 8s
 // ═══════════════════════════════════════════════════════════════
 
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-
 // ═══════════════════════════════════════════════════════════════
 // BREATHING SCREEN
 // ═══════════════════════════════════════════════════════════════

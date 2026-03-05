@@ -405,7 +405,7 @@ class NotificationService {
 
     const details = NotificationDetails(
       android: androidDetails,
-      iOS: const DarwinNotificationDetails(
+      iOS: DarwinNotificationDetails(
         presentAlert: true,
         presentSound: true,
       ),

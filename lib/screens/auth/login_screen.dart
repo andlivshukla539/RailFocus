@@ -26,7 +26,6 @@ class _L {
   static const bg       = Color(0xFF050710);
   static const midnight = Color(0xFF070A18);
   static const velvet   = Color(0xFF0E1020);
-  static const surface  = Color(0xFF14182C);
   static const brass    = Color(0xFFD4A853);
   static const brassLt  = Color(0xFFF0CC7A);
   static const brassDk  = Color(0xFF8A6930);

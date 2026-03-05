@@ -660,9 +660,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                 child: Transform(
                   alignment: Alignment.center,
                   transform:
-                      Matrix4.identity()
-                        ..translate(0.0, slide)
-                        ..scale(scale, scale, 1.0),
+                      Matrix4.translationValues(0.0, slide, 0.0)
+                        ..multiply(Matrix4.diagonal3Values(scale, scale, 1.0)),
                   child: Dismissible(
                     key: ValueKey(session.id),
                     direction: DismissDirection.endToStart,

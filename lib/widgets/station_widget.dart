@@ -5,7 +5,6 @@
 //  grand terminus as the user earns bricks through focus sessions.
 // ═══════════════════════════════════════════════════════════════
 
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

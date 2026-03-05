@@ -27,7 +27,9 @@ import '../widgets/journey_map_widget.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 bool get _isLowEnd {
-  return WidgetsBinding.instance.window.physicalSize.shortestSide < 720;
+  return WidgetsBinding.instance.platformDispatcher.views.first.physicalSize
+          .shortestSide <
+      720;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -260,7 +262,6 @@ abstract class _C {
   static const surface = Color(0xFF111320);
   static const rim = Color(0xFF1C1F2E);
   static const copper = Color(0xFFB8824A);
-  static const gold = Color(0xFFD4A855);
   static const goldLt = Color(0xFFEDCB80);
   static const goldDk = Color(0xFF7A5220);
   static const cream = Color(0xFFEDE6D8);
@@ -322,9 +323,6 @@ class _FocusScreenState extends State<FocusScreen>
   late final AnimationController _flash;
   late final AnimationController _eqCtrl;
 
-  late final Animation<double> _fadein;
-  late final Animation<Offset> _slidein;
-
   final ValueNotifier<double> _progN = ValueNotifier(0);
   final ValueNotifier<int> _remSecNotifier = ValueNotifier(0);
   final _storage = StorageService();
@@ -336,7 +334,6 @@ class _FocusScreenState extends State<FocusScreen>
   double _volume = 0.7;
 
   // ── Cabin / co-working ─────────────────────────────────────
-  List<CabinPassenger> _cabinPassengers = [];
   StreamSubscription<CabinModel?>? _cabinSub;
 
   double get _prog => (1.0 - _remSec / _totalSec).clamp(0.0, 1.0);
@@ -393,12 +390,6 @@ class _FocusScreenState extends State<FocusScreen>
       duration: const Duration(milliseconds: 2200),
     )..repeat();
 
-    _fadein = CurvedAnimation(parent: _enter, curve: Curves.easeOut);
-    _slidein = Tween<Offset>(
-      begin: const Offset(0, .04),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _enter, curve: Curves.easeOutCubic));
-
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
 
@@ -430,11 +421,7 @@ class _FocusScreenState extends State<FocusScreen>
       // Cabin: go active and subscribe to updates
       CabinService.instance.setActive(true);
       _cabinSub = CabinService.instance.currentCabinStream().listen((cabin) {
-        if (mounted && cabin != null) {
-          setState(() => _cabinPassengers = cabin.passengers);
-        } else if (mounted) {
-          setState(() => _cabinPassengers = []);
-        }
+        if (mounted) setState(() {});
       });
     });
   }
@@ -914,8 +901,7 @@ class _FocusScreenState extends State<FocusScreen>
           final s = math.sin(_sway.value * math.pi * 2);
           return Transform(
             transform:
-                Matrix4.identity()
-                  ..translate(0.0, s * 1.2, 0.0)
+                Matrix4.translationValues(0.0, s * 1.2, 0.0)
                   ..rotateZ(s * 0.0005),
             alignment: Alignment.center,
             child: child,
@@ -1109,111 +1095,7 @@ class _FocusScreenState extends State<FocusScreen>
   // PROGRESS RAIL
   // ──────────────────────────────────────────────────────────
 
-  Widget _buildProgressRail(Color accent) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: LayoutBuilder(
-        builder: (_, cst) {
-          final w = cst.maxWidth;
-          return Column(
-            children: [
-              Row(
-                children: [
-                  Text(
-                    _vis.departure,
-                    style: GoogleFonts.spaceMono(
-                      fontSize: 7.5,
-                      color: _C.muted,
-                      letterSpacing: 1.6,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    _vis.arrival,
-                    style: GoogleFonts.spaceMono(
-                      fontSize: 7.5,
-                      color: _C.muted,
-                      letterSpacing: 1.6,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 22,
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _progN,
-                  builder:
-                      (_, p, __) => Stack(
-                        alignment: Alignment.centerLeft,
-                        children: [
-                          CustomPaint(
-                            size: Size(w, 22),
-                            painter: _TrackPainter(),
-                          ),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 600),
-                            curve: Curves.easeInOut,
-                            width: (w * p).clamp(0.0, w),
-                            height: 5,
-                            margin: const EdgeInsets.only(top: 8),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [_C.copper, accent],
-                              ),
-                              borderRadius: BorderRadius.circular(3),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: accent.withValues(alpha: .60),
-                                  blurRadius: 12,
-                                ),
-                              ],
-                            ),
-                          ),
-                          AnimatedPositioned(
-                            duration: const Duration(milliseconds: 600),
-                            curve: Curves.easeInOut,
-                            left: (w * p - 10).clamp(0.0, w - 20),
-                            top: 0,
-                            child: _TrainPip(color: accent),
-                          ),
-                        ],
-                      ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              ValueListenableBuilder<double>(
-                valueListenable: _progN,
-                builder:
-                    (_, p, __) => Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${(p * _vis.distanceKm).round()} km',
-                          style: GoogleFonts.spaceMono(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: accent,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        Text(
-                          '${_vis.distanceKm} km total',
-                          style: GoogleFonts.spaceMono(
-                            fontSize: 9,
-                            color: _C.dim,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
+
 
   // ──────────────────────────────────────────────────────────
   // SOUND PANEL — Play/stop tied to _audio service now
@@ -1994,7 +1876,7 @@ class _CrossingTrainPainter extends CustomPainter {
   static const double _cabTop = -70.0;
   static const double _cabBot = -16.0;
 
-  static const double _boilX = -_cabW;
+
   static const double _boilW = 138.0;
   static const double _boilLeft = -_cabW - _boilW;
 
@@ -2002,7 +1884,7 @@ class _CrossingTrainPainter extends CustomPainter {
   static const double _sbW = 26.0;
   static const double _sbLeft = _sbX - _sbW;
 
-  static const double _cowX = _sbLeft;
+
 
   static const double _stackX = _sbX + _boilW * .22;
   static const double _stackBot = _bcy - _br;
@@ -2793,54 +2675,12 @@ class _FramePainter extends CustomPainter {
   bool shouldRepaint(_) => false;
 }
 
-class _TrackPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, (size.height - 5) / 2, size.width, 5),
-        const Radius.circular(2.5),
-      ),
-      Paint()..color = _C.surface,
-    );
-    final tp = Paint()..color = _C.rim;
-    for (double x = 0; x < size.width; x += 22) {
-      canvas.drawRect(Rect.fromLTWH(x, (size.height - 11) / 2, 1.5, 11), tp);
-    }
-  }
 
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-class _TrainPip extends StatelessWidget {
-  final Color color;
-  const _TrainPip({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-        border: Border.all(color: _C.bg, width: 2.5),
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: .65), blurRadius: 14),
-        ],
-      ),
-      child: const Center(
-        child: Text('🚄', style: TextStyle(fontSize: 8, height: 1)),
-      ),
-    );
-  }
-}
 
 class _Chip extends StatelessWidget {
   final Color color;
   final Widget child;
-  const _Chip({super.key, required this.color, required this.child});
+  const _Chip({required this.color, required this.child});
 
   @override
   Widget build(BuildContext context) {

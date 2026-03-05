@@ -15,7 +15,6 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 import '../services/storage_service.dart';
-import '../theme/luxe_theme.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // PASSPORT STAMP MODEL
@@ -230,10 +229,10 @@ class _PassportScreenState extends State<PassportScreen>
       final file = File('${dir.path}/railfocus_passport.png');
       await file.writeAsBytes(byteData.buffer.asUint8List());
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: '🛂 My RailFocus Passport — $_unlocked/${allStamps.length} stamps collected! 🚂',
-      );
+      await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path)],
+      text: '🛂 My RailFocus Passport — $_unlocked/${allStamps.length} stamps collected! 🚂',
+    ));
     } catch (e) {
       debugPrint('Share error: $e');
     }

@@ -205,7 +205,9 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
   void dispose() {
     _fogCtrl.dispose();
     _glowCtrl.dispose();
-    for (final ctrl in _phaseControllers.values) ctrl.dispose();
+    for (final ctrl in _phaseControllers.values) {
+      ctrl.dispose();
+    }
     super.dispose();
   }
 
@@ -221,7 +223,9 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
     ];
 
     for (final step in sequence) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       final phase = step.$1;
       final hapticAction = step.$2;
 
@@ -233,11 +237,14 @@ class _BoardingRitualScreenState extends State<BoardingRitualScreen>
           });
           _showSkip = true;
         }
-        if (phase == BoardingPhase.depart) _showSkip = false;
-        {}
+        if (phase == BoardingPhase.depart) {
+          _showSkip = false;
+        }
       });
 
-      if (hapticAction != null) hapticAction();
+      if (hapticAction != null) {
+        hapticAction();
+      }
       await _phaseControllers[phase]!.forward();
     }
 

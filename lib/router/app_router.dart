@@ -16,7 +16,7 @@ import '../screens/settings_screen.dart' show SettingsScreen;
 import '../screens/splash_screen.dart' show SplashScreen;
 import '../screens/achievements_screen.dart' show AchievementsScreen;
 import '../screens/stats_screen.dart' show StatsScreen;
-import '../screens/break_screen.dart' show BreakScreen;
+
 import '../screens/share_card_screen.dart' show ShareCardScreen;
 import '../screens/passport_screen.dart' show PassportScreen;
 import '../screens/insights_screen.dart' show InsightsScreen;
@@ -211,7 +211,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-late final GoRouter appRouter = GoRouter(
+final GoRouter appRouter = GoRouter(
   initialLocation: AppRouter.splash,
   debugLogDiagnostics: true,
 

@@ -75,8 +75,6 @@ import '../models/route_model.dart';
 import '../router/app_router.dart';
 import '../services/audio_service.dart';
 import '../services/ai_coach_service.dart';
-import '../models/focus_project.dart';
-import '../services/storage_service.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  PALETTE
@@ -109,7 +107,7 @@ abstract class _C {
 extension _M4 on Matrix4 {
   /// Uniform XY scale — Z kept at 1.0 (no perspective distortion).
   /// Replaces the deprecated single-arg ..scale(s) everywhere.
-  Matrix4 xy(double s) => this..scale(s, s, 1.0);
+  Matrix4 xy(double s) => this..multiply(Matrix4.diagonal3Values(s, s, 1.0));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -161,11 +159,10 @@ class _BookingScreenState extends State<BookingScreen>
   MoodOption? _mood;
   String _goal = '';
   DurationOption? _dur;
-  bool _breathingEnabled = true;
-  bool _pomodoroEnabled = false;
-  int _pomodoroRounds = 2;
+  final bool _breathingEnabled = true;
+  final bool _pomodoroEnabled = false;
+  final int _pomodoroRounds = 2;
   String? _selectedProjectId;
-  Map<String, dynamic>? _aiSuggestion;
 
   @override
   void initState() {
@@ -859,11 +856,7 @@ class _RouteStepState extends State<_RouteStep> {
         ),
         const SizedBox(height: 8),
 
-        // ── ✨ AI Route Generator ─────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          child: _AiRouteButton(onRouteGenerated: widget.onSelect),
-        ),
+
       ],
     );
   }
@@ -951,11 +944,7 @@ class _RouteCardState extends State<_RouteCard>
                         ..setEntry(3, 2, 0.001)
                         ..rotateX(_tx * math.pi / 180)
                         ..rotateY(_ty * math.pi / 180)
-                        ..scale(
-                          1.0 - _press.value * 0.025,
-                          1.0 - _press.value * 0.025,
-                          1.0,
-                        ),
+                        ..xy(1.0 - _press.value * 0.025),
                   child: child,
                 ),
             child: AnimatedContainer(

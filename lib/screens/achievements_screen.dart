@@ -23,7 +23,6 @@ abstract class _P {
   static const surface = Color(0xFF111320);
   static const rim = Color(0xFF1C1F2E);
   static const gold = Color(0xFFD4A855);
-  static const goldLt = Color(0xFFEDCB80);
   static const cream = Color(0xFFEDE6D8);
   static const muted = Color(0xFF706A5C);
   static const dim = Color(0xFF3E3A32);
