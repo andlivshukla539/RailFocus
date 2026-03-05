@@ -5,8 +5,10 @@
 //  provides personalized coaching insights.
 // ═══════════════════════════════════════════════════════════════
 
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_keys.dart';
 import 'storage_service.dart';
@@ -20,7 +22,7 @@ class AiCoachService {
   GenerativeModel? _model;
   GenerativeModel get model {
     _model ??= GenerativeModel(
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash',
       apiKey: ApiKeys.geminiApiKey,
       generationConfig: GenerationConfig(
         maxOutputTokens: 300,
@@ -30,15 +32,40 @@ class AiCoachService {
     return _model!;
   }
 
-  // ── Cache ──────────────────────────────────────────
-  String? _cachedTip;
-  DateTime? _lastTipTime;
+  // ── Mutex & Rate Limiting ────────────────────────────
+  bool _isRequestInProgress = false;
+  DateTime? _lastApiCall;
+  static const Duration _rateLimit = Duration(seconds: 3);
 
-  Map<String, dynamic>? _cachedSmartSuggestion;
-  DateTime? _lastSmartSuggestionTime;
+  /// Checks if we've waited long enough since the last AI call
+  bool _canCallApi() {
+    if (_lastApiCall == null) return true;
+    return DateTime.now().difference(_lastApiCall!) > _rateLimit;
+  }
 
-  Map<String, dynamic>? _cachedAdaptiveLength;
-  DateTime? _lastAdaptiveLengthTime;
+  /// Global centralized wrapper for all Gemini requests.
+  /// Prevents parallel execution, enforces rate limits, handles errors gracefully.
+  Future<String?> _safeGenerate(String prompt) async {
+    if (!_canCallApi() || _isRequestInProgress) {
+      debugPrint('⚠️ AI call blocked: rate limit or mutex active.');
+      return null;
+    }
+
+    _isRequestInProgress = true;
+
+    try {
+      final response = await model.generateContent([Content.text(prompt)]);
+      _lastApiCall = DateTime.now();
+      return response.text;
+    } catch (e) {
+      debugPrint("🔴 AI API error: $e");
+      return null;
+    } finally {
+      _isRequestInProgress = false;
+    }
+  }
+
+  // ── Cache Settings ───────────────────────────────────
 
   // ══════════════════════════════════════
   // BUILD CONTEXT (user data summary)
@@ -106,18 +133,18 @@ class AiCoachService {
         .toList();
 
     return '''
-USER FOCUS DATA:
-- Current streak: $streak days
-- Total focus hours: ${totalHours.toStringAsFixed(1)}h
-- Total sessions: $totalSessions
-- Today: ${todayMinutes}min across $todaySessions sessions
-- Bricks earned: $bricks
-- Station level: $stationLevel/10
-- Average session: ${avgMinutes}min
-- Peak focus hour: ${peakHour}:00
-- Peak focus day: ${dayNames[peakDay]}
-- Favorite route: $favRoute ($favMins min total)
-- Recent moods: ${recentMoods.isEmpty ? 'none set' : recentMoods.join(', ')}
+USER STATS:
+Streak: $streak
+Total Hours: ${totalHours.toStringAsFixed(1)}
+Sessions: $totalSessions
+Today: ${todayMinutes}m ($todaySessions sessions)
+Bricks: $bricks
+Station: $stationLevel/10
+Avg Session: ${avgMinutes}m
+Peak Hour: ${peakHour}:00
+Peak Day: ${dayNames[peakDay]}
+Fav Route: $favRoute ($favMins m)
+Recent Moods: ${recentMoods.isEmpty ? 'none' : recentMoods.join(', ')}
 ''';
   }
 
@@ -128,28 +155,42 @@ USER FOCUS DATA:
   /// Generate a personalized coaching tip for the home screen.
   Future<String> getDailyCoachTip() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastTimeStr = prefs.getString('ai_daily_tip_time');
+      if (lastTimeStr != null) {
+        final lastTime = DateTime.parse(lastTimeStr);
+        if (DateTime.now().difference(lastTime).inHours < 6) {
+          final cached = prefs.getString('ai_daily_tip');
+          if (cached != null) return cached;
+        }
+      }
+
       final context = _buildUserContext();
       final now = DateTime.now();
       final hour = now.hour;
       final timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
 
       final prompt = '''
-You are a warm, motivating focus coach inside a train-themed productivity app called RailFocus.
-The user sees this on their home screen. Give ONE short, personalized coaching tip (2-3 sentences max).
-
+You are a warm focus coach in RailFocus, a train app.
+Give ONE short coaching tip (max 2 sentences) for the home screen based on the user stats below.
 Rules:
-- Use the data to make it personal (reference their streak, patterns, peak hours, etc.)
-- Be encouraging but specific, not generic
-- Use a train/journey metaphor occasionally
-- Use 1-2 emojis max
+- Make it personal using their stats
+- Occasionally use train metaphors
+- Max 1 emoji
 - Current time: $timeOfDay
-- Keep it under 40 words
+- Max 30 words
 
 $context
 ''';
 
-      final response = await model.generateContent([Content.text(prompt)]);
-      return response.text?.trim() ?? _fallbackTip();
+      final text = await _safeGenerate(prompt);
+      if (text == null) return _fallbackTip();
+      
+      final result = text.trim();
+      await prefs.setString('ai_daily_tip', result);
+      await prefs.setString('ai_daily_tip_time', DateTime.now().toIso8601String());
+      
+      return result;
     } catch (e) {
       debugPrint('🔴 AI Coach error: $e');
       return _fallbackTip();
@@ -169,27 +210,24 @@ $context
   }) async {
     try {
       final context = _buildUserContext();
-      final now = DateTime.now();
-      final hour = now.hour;
 
       final prompt = '''
-You are a warm conductor congratulating a passenger who just completed a focus journey in RailFocus.
-
-Session just completed:
-- Duration: ${durationMinutes} minutes
-- Route: $routeName
-- Time: ${hour}:${now.minute.toString().padLeft(2, '0')}
-- Mood: ${mood ?? 'not set'}
-- Goal: ${goal ?? 'not set'}
+You are a conductor in RailFocus congratulating a user.
+Session done:
+Duration: ${durationMinutes}m
+Route: $routeName
+Mood: ${mood ?? '-'}
+Goal: ${goal ?? '-'}
 
 $context
 
-Write a personalized, warm congratulations (2-3 sentences max). Reference their specific achievement.
-Use train/journey metaphors. Use 1-2 emojis. Keep under 40 words.
+Write a 2-sentence warm congratulations. Reference their achievement.
+Use a train metaphor. Max 1 emoji. Max 35 words.
 ''';
 
-      final response = await model.generateContent([Content.text(prompt)]);
-      return response.text?.trim() ?? _fallbackPostSession(durationMinutes);
+      final text = await _safeGenerate(prompt);
+      if (text == null) return _fallbackPostSession(durationMinutes);
+      return text.trim();
     } catch (e) {
       debugPrint('🔴 AI post-session error: $e');
       return _fallbackPostSession(durationMinutes);
@@ -203,25 +241,35 @@ Use train/journey metaphors. Use 1-2 emojis. Keep under 40 words.
   /// Generate analytics insights for the Insights Dashboard.
   Future<List<String>> getAnalyticsInsights() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastTimeStr = prefs.getString('ai_analytics_time');
+      if (lastTimeStr != null) {
+        final lastTime = DateTime.parse(lastTimeStr);
+        if (DateTime.now().difference(lastTime).inHours < 1) {
+          final cached = prefs.getStringList('ai_analytics');
+          if (cached != null && cached.isNotEmpty) return cached;
+        }
+      }
+
       final context = _buildUserContext();
 
       final prompt = '''
-You are an analytics AI for a focus/productivity app called RailFocus.
-Analyze the user's data and provide exactly 4 one-line insights.
-
+You are an analytics AI for RailFocus. Analyze this user data and return EXACTLY 4 one-line insights.
 Rules:
-- Each insight should be on its own line
-- Start each with a relevant emoji
-- Be specific using their data (numbers, patterns, comparisons)
-- Include: 1 strength, 1 pattern, 1 suggestion, 1 motivation
-- Keep each under 20 words
-- No bullet points, just emoji + text
+- 1 insight per line
+- Start each with an emoji
+- Use exact data to be specific
+- Types: 1 strength, 1 pattern, 1 tip, 1 motivation
+- Max 15 words per line
+- No markdown bullets
 
 $context
 ''';
 
-      final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text?.trim() ?? '';
+      final rawText = await _safeGenerate(prompt);
+      if (rawText == null) return _fallbackInsights();
+
+      final text = rawText.trim();
       final lines = text
           .split('\n')
           .where((l) => l.trim().isNotEmpty)
@@ -229,6 +277,11 @@ $context
           .toList();
 
       if (lines.isEmpty) return _fallbackInsights();
+
+      // Cache the result
+      await prefs.setStringList('ai_analytics', lines);
+      await prefs.setString('ai_analytics_time', DateTime.now().toIso8601String());
+
       return lines;
     } catch (e) {
       debugPrint('🔴 AI analytics error: $e');
@@ -243,24 +296,42 @@ $context
   /// Generate a motivational weekly summary.
   Future<String> getWeeklyReport() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastTimeStr = prefs.getString('ai_weekly_report_time');
+      if (lastTimeStr != null) {
+        final lastTime = DateTime.parse(lastTimeStr);
+        if (DateTime.now().difference(lastTime).inHours < 24) {
+          final cached = prefs.getString('ai_weekly_report');
+          if (cached != null) return cached;
+        }
+      }
+
       final context = _buildUserContext();
 
       final prompt = '''
-You are a focus coach writing a short weekly report card for a user of RailFocus (a train-themed focus app).
+You are a focus coach in RailFocus writing a weekly report based on stats below.
 
 $context
 
-Write a 4-5 sentence weekly summary. Include:
-1. What they did well (with specific numbers)
+Write a 4-sentence summary:
+1. What went well (use numbers)
 2. A pattern you noticed
-3. One concrete suggestion for next week
-4. An encouraging closing line with a train metaphor
+3. 1 suggestion for next week
+4. Encouraging train metaphor closing line
 
-Use 2-3 emojis total. Keep the whole thing under 80 words.
+Max 2 emojis. Max 70 words total.
 ''';
 
-      final response = await model.generateContent([Content.text(prompt)]);
-      return response.text?.trim() ?? 'Keep focusing — your journey continues! 🚂';
+      final resultText = await _safeGenerate(prompt);
+      if (resultText == null) return 'Keep focusing — your journey continues! 🚂';
+      
+      final result = resultText.trim();
+
+      // Cache the result
+      await prefs.setString('ai_weekly_report', result);
+      await prefs.setString('ai_weekly_report_time', DateTime.now().toIso8601String());
+
+      return result;
     } catch (e) {
       debugPrint('🔴 AI weekly report error: $e');
       return 'Keep focusing — your journey continues! 🚂';
@@ -302,33 +373,35 @@ Use 2-3 emojis total. Keep the whole thing under 80 words.
   /// current hour is within ±1 hour of the user's peak focus time.
   /// Returns null if no suggestion is warranted right now.
   Future<Map<String, dynamic>?> getSmartSuggestion() async {
-    final now = DateTime.now();
-    if (_cachedSmartSuggestion != null && _lastSmartSuggestionTime != null && 
-        now.difference(_lastSmartSuggestionTime!).inHours < 4) {
-      return _cachedSmartSuggestion;
-    }
-
     try {
-      final context = _buildUserContext();
+      final prefs = await SharedPreferences.getInstance();
+      final lastTimeStr = prefs.getString('ai_smart_suggestion_time');
       final now = DateTime.now();
+      
+      if (lastTimeStr != null) {
+        final lastTime = DateTime.parse(lastTimeStr);
+        if (now.difference(lastTime).inHours < 4) {
+          final cachedStr = prefs.getString('ai_smart_suggestion');
+          if (cachedStr != null) {
+             return jsonDecode(cachedStr) as Map<String, dynamic>;
+          }
+        }
+      }
+
+      final context = _buildUserContext();
       final prompt = '''
 $context
+Current time: ${now.hour}:${now.minute.toString().padLeft(2, '0')}
 
-Current local time: ${now.hour}:${now.minute.toString().padLeft(2, '0')}
-
-Task: Determine if NOW is a good time for this user to start a focus session based on their peak hour and patterns.
-If yes, respond with a JSON object (no markdown):
-{"title":"...", "reason":"...", "durationMinutes": 25}
-- title: 8 words max, motivational
-- reason: 12 words max, personal to their pattern
-- durationMinutes: 15, 25, 45, or 60 (based on their history)
-If now is NOT a good time, respond with exactly: null
+Task: Is NOW a good time to focus based on their peak hour?
+If yes, return exact JSON: {"title":"short title", "reason":"short reason", "durationMinutes": 25}
+- durationMinutes must be 15, 25, 45, or 60
+If not a good time, return ONLY: null
 ''';
 
-      final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text?.trim() ?? '';
-      if (text == 'null' || text.isEmpty) return null;
-      final clean = text.replaceAll(RegExp(r'```[a-z]*\n?'), '').trim();
+      final rawText = await _safeGenerate(prompt);
+      if (rawText == null || rawText == 'null' || rawText.isEmpty) return null;
+      final clean = rawText.replaceAll(RegExp(r'```[a-z]*\n?'), '').trim();
       // Simple parse
       final map = <String, dynamic>{};
       final titleMatch = RegExp(r'"title"\s*:\s*"([^"]+)"').firstMatch(clean);
@@ -339,8 +412,9 @@ If now is NOT a good time, respond with exactly: null
       map['reason'] = reasonMatch?.group(1) ?? 'Your peak focus window is open';
       map['durationMinutes'] = int.tryParse(durMatch?.group(1) ?? '25') ?? 25;
       
-      _cachedSmartSuggestion = map;
-      _lastSmartSuggestionTime = now;
+      await prefs.setString('ai_smart_suggestion', jsonEncode(map));
+      await prefs.setString('ai_smart_suggestion_time', now.toIso8601String());
+      
       return map;
     } catch (e) {
       debugPrint('🔴 AI smart suggestion error: $e');
@@ -355,13 +429,21 @@ If now is NOT a good time, respond with exactly: null
   /// Looks at the last 10 completed sessions and suggests an optimal
   /// session length. Returns {minutes, reason} or null on error.
   Future<Map<String, dynamic>?> getAdaptiveSessionLength() async {
-    final now = DateTime.now();
-    if (_cachedAdaptiveLength != null && _lastAdaptiveLengthTime != null && 
-        now.difference(_lastAdaptiveLengthTime!).inHours < 12) {
-      return _cachedAdaptiveLength;
-    }
-
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastTimeStr = prefs.getString('ai_adaptive_length_time');
+      final now = DateTime.now();
+      
+      if (lastTimeStr != null) {
+        final lastTime = DateTime.parse(lastTimeStr);
+        if (now.difference(lastTime).inHours < 12) {
+          final cachedStr = prefs.getString('ai_adaptive_length');
+          if (cachedStr != null) {
+             return jsonDecode(cachedStr) as Map<String, dynamic>;
+          }
+        }
+      }
+
       final sessions = _storage.getAllSessions().take(10).toList();
       if (sessions.isEmpty) return null;
 
@@ -370,24 +452,30 @@ If now is NOT a good time, respond with exactly: null
       ).join('\n');
 
       final prompt = '''
-User's recent focus sessions:
+Recent sessions:
 $lines
 
-Task: Based on their completion rate and session lengths, what single duration (15, 25, 30, 45, or 60 minutes) should they try next?
-Respond with JSON only (no markdown):
-{"minutes": 25, "reason": "12 word max explanation"}
+Task: Based on their completion rate, what duration (15, 25, 30, 45, 60m) should they try next?
+Return JSON only:
+{"minutes": 25, "reason": "short explanation"}
 ''';
 
-      final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text?.trim() ?? '';
-      final clean = text.replaceAll(RegExp(r'```[a-z]*\n?'), '').trim();
+      final rawText = await _safeGenerate(prompt);
+      if (rawText == null || rawText.isEmpty) return null;
+      final clean = rawText.replaceAll(RegExp(r'```[a-z]*\n?'), '').trim();
       final minsMatch = RegExp(r'"minutes"\s*:\s*(\d+)').firstMatch(clean);
       final reasonMatch = RegExp(r'"reason"\s*:\s*"([^"]+)"').firstMatch(clean);
       if (minsMatch == null) return null;
-      return {
+      
+      final map = {
         'minutes': int.tryParse(minsMatch.group(1)!) ?? 25,
         'reason': reasonMatch?.group(1) ?? 'Based on your recent sessions',
       };
+      
+      await prefs.setString('ai_adaptive_length', jsonEncode(map));
+      await prefs.setString('ai_adaptive_length_time', now.toIso8601String());
+      
+      return map;
     } catch (e) {
       debugPrint('🔴 AI adaptive length error: $e');
       return null;
@@ -403,21 +491,13 @@ Respond with JSON only (no markdown):
   Future<Map<String, dynamic>?> generateRoute(String mood) async {
     try {
       final prompt = '''
-Create a unique fictional luxury train route inspired by the mood: "$mood".
-Respond with JSON only (no markdown, no explanation):
-{
-  "name": "City A to City B",
-  "emoji": "🚄",
-  "tagline": "A 12-word poetic description of the journey atmosphere"
-}
-Rules:
-- name must be two fictional or real cities, 4-7 words
-- emoji must be a single transport or nature emoji reflecting the theme
-- tagline must evoke the atmosphere of this journey  
+Create a fictional luxury train route inspired by mood: "$mood".
+Return JSON ONLY:
+{"name": "City A to City B", "emoji": "🚄", "tagline": "short poetic description"}
 ''';
-      final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text?.trim() ?? '';
-      final clean = text.replaceAll(RegExp(r'```[a-z]*\n?'), '').trim();
+      final rawText = await _safeGenerate(prompt);
+      if (rawText == null || rawText.isEmpty) return null;
+      final clean = rawText.replaceAll(RegExp(r'```[a-z]*\n?'), '').trim();
       final nameMatch = RegExp(r'"name"\s*:\s*"([^"]+)"').firstMatch(clean);
       final emojiMatch = RegExp(r'"emoji"\s*:\s*"([^"]+)"').firstMatch(clean);
       final tagMatch = RegExp(r'"tagline"\s*:\s*"([^"]+)"').firstMatch(clean);
@@ -442,14 +522,15 @@ Rules:
   Future<String> getVoiceReflection(String transcript, String routeName) async {
     try {
       final prompt = '''
-The user just completed a focus session on "$routeName". Here is their spoken reflection:
-"$transcript"
+Route: "$routeName"
+Spoken reflection: "$transcript"
 
-Write ONE single sentence (max 20 words) in first-person that captures the essence of their reflection, starting with "Today I...".
-Only return the sentence, no quotes.
+Write ONE 15-word max sentence in first-person summarizing this, starting with "Today I...".
+Return ONLY the sentence, no quotes.
 ''';
-      final response = await model.generateContent([Content.text(prompt)]);
-      return response.text?.trim() ?? transcript;
+      final text = await _safeGenerate(prompt);
+      if (text == null) return transcript;
+      return text.trim();
     } catch (e) {
       debugPrint('🔴 AI voice reflection error: $e');
       return transcript;

@@ -205,7 +205,6 @@ class _SettingsScreenState extends State<SettingsScreen>
             child: const Icon(Icons.settings_rounded, color: _S.ink, size: 20),
           ),
         ],
-      ),
     );
   }
 
