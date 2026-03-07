@@ -1,93 +1,156 @@
-# 🚂 RailFocus
+<div align="center">
 
-> A premium, train-journey-themed focus and productivity timer built with Flutter.
+<br/>
 
-![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white) ![Firebase](https://img.shields.io/badge/firebase-ffca28?style=for-the-badge&logo=firebase&logoColor=black) ![Hive](https://img.shields.io/badge/Hive-Local_Storage-green?style=for-the-badge)
+```
+██████╗  █████╗ ██╗██╗     ███████╗ ██████╗  ██████╗██╗   ██╗███████╗
+██╔══██╗██╔══██╗██║██║     ██╔════╝██╔═══██╗██╔════╝██║   ██║██╔════╝
+██████╔╝███████║██║██║     █████╗  ██║   ██║██║     ██║   ██║███████╗
+██╔══██╗██╔══██║██║██║     ██╔══╝  ██║   ██║██║     ██║   ██║╚════██║
+██║  ██║██║  ██║██║███████╗██║     ╚██████╔╝╚██████╗╚██████╔╝███████║
+╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝
+```
 
-RailFocus is not just a Pomodoro app; it's an immersive experience. Step into the beautifully crafted Grand Station, punch your golden ticket, and embark on a journey of deep work. 
+**A premium, train-journey-themed focus & productivity timer.**
 
-## ✨ Key Features
+[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
+[![Hive](https://img.shields.io/badge/Hive-Local%20Storage-yellow?style=for-the-badge)](https://pub.dev/packages/hive)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](./LICENSE)
 
-*   **🌅 Dynamic Scenery:** Experience a stunning art-deco diorama that changes automatically based on your real-world time of day. Morning sunrise, twilight fireflies, midnight shooting stars, and the mesmerizing aurora borealis.
-*   **⏱️ Deep Work Timer:** Fully customizable focus timer acting as your train journey. Arrive at your destination safely without distractions.
-*   **🏆 Gamification & Progression:**
-    *   Build up your own **Grand Station** brick by brick as you complete focus sessions.
-    *   Earn daily streaks to unlock beautiful "Focus Moods" (e.g., golden hour glows and sparkles).
-    *   Complete **Daily Challenges** for bonus rewards.
-    *   Unlock gorgeous, hand-crafted scenic routes (The Midnight Express, Dawn Departure, etc.) by accumulating focus hours.
-*   **🤝 Co-working Cabins:** Start or join real-time focus rooms. Study and work alongside your friends with syncing timers.
-*   **🎵 Ambient Soundscapes:** Built-in audio mixer with high-quality ambient sounds (Rain, Tracks, Lo-Fi, Sleep) to keep you perfectly zoned in.
-*   **☁️ Cloud Sync & Auth:** Seamlessly switch devices using Email or Google Sign-In. All your data, achievements, and focus hours securely sync via Firebase—even while supporting a robust offline-first architecture via Hive.
-*   **💎 Stunning UI/UX:** Meticulously designed interfaces with glassmorphism, micro-animations, physical spring physics, haptic feedback, and custom vector graphics to ensure an incredibly satisfying experience.
+*Step into the Grand Station. Punch your golden ticket. Embark on a journey of deep, uninterrupted work.*
+
+</div>
+
+---
+
+## 🚉 What is RailFocus?
+
+RailFocus is not just another Pomodoro timer — it's an **immersive productivity experience** built around the romance of golden-age rail travel. Every focus session is a train journey. Every completed hour builds your Grand Station. Every streak unlocks something beautiful.
+
+Built with **Flutter** for a smooth cross-platform experience, **Firebase** for real-time cloud sync, and **Hive** for a rock-solid offline-first foundation.
+
+---
+
+## ✨ Features
+
+### 🌅 Dynamic Scenery
+A stunning art-deco diorama that shifts automatically with your **real-world time of day** — morning sunrises, twilight fireflies, midnight shooting stars, and the mesmerising aurora borealis. Your backdrop evolves as the hours do.
+
+### ⏱️ Deep Work Timer
+A fully customisable focus timer styled as a train journey. Depart, travel, and arrive at your destination — distraction-free and on schedule.
+
+### 🏆 Gamification & Progression
+- 🏗️ **Build your Grand Station** brick by brick as you complete focus sessions
+- 🔥 **Daily streaks** unlock beautiful *Focus Moods* — golden hour glows, sparkle overlays, and more
+- 📋 **Daily Challenges** for bonus rewards
+- 🗺️ **Scenic Routes** *(The Midnight Express, Dawn Departure, and more)* unlocked by accumulating focus hours
+
+### 🤝 Co-working Cabins
+Start or join **real-time focus rooms** and work alongside friends with perfectly synced timers. Your own private cabin on the express, open to the world.
+
+### 🎵 Ambient Sound
+The focus timer currently ships with **one carefully chosen ambient track** to keep you in the zone during your journey. More soundscapes are planned for future updates.
+
+### ☁️ Cloud Sync + Offline First
+All focus hours, achievements, and progress sync seamlessly across devices via **Firebase**. A robust offline-first architecture via **Hive** ensures you never lose a session — even without a connection.
+
+### 💎 Stunning UI/UX
+Glassmorphism · Spring physics · Haptic feedback · Custom vector graphics · Micro-animations — every interaction is crafted to feel premium and satisfying.
 
 ---
 
 ## 📸 Screenshots
 
+<div align="center">
 
+| <img src="https://github.com/user-attachments/assets/c671acdd-6a0d-4969-8564-7396ab06f388" width="250"/> | <img src="https://github.com/user-attachments/assets/cdea9c55-c17c-4ffd-aca8-c3d156dcf6b7" width="250"/> |
+|:---:|:---:|
+| **The Departure Hall** | **Active Focus Journey** |
 
-|<img src="https://github.com/user-attachments/assets/c671acdd-6a0d-4969-8564-7396ab06f388" width="250"/>||<img src="https://github.com/user-attachments/assets/cdea9c55-c17c-4ffd-aca8-c3d156dcf6b7" width="250"/>|
-|:---:|:---:|:---:|
-| **The Departure Hall** | | **Active Focus Journey** |
+</div>
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Framework** | Flutter (Dart) |
+| **State Management** | Pure `StatefulWidget` + Singleton Services |
+| **Cloud Backend** | Firebase Auth + Cloud Firestore |
+| **Local Storage** | Hive (offline-first NoSQL) |
+| **Routing** | `go_router` |
+| **Animations** | `flutter_animate` + Custom Painters |
 
 ---
 
 ## 🚀 Getting Started
 
-To get a local copy up and running, follow these simple steps.
-
 ### Prerequisites
 
-*   Flutter SDK (v3.7.0 or higher)
-*   Dart SDK (v3.1.0 or higher)
-*   Android Studio / Xcode (for emulation/building)
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) **v3.7.0+**
+- Dart SDK **v3.1.0+**
+- Android Studio or Xcode *(for emulation and builds)*
 
 ### Installation
 
-1. **Clone the repository:**
-   ```sh
-   git clone https://github.com/your-username/RailFocus.git
-   cd RailFocus
-   ```
+**1. Clone the repository**
+```sh
+git clone https://github.com/andlivshukla539/RailFocus.git
+cd RailFocus
+```
 
-2. **Setup Firebase:**
-   > **Note:** Due to security reasons, you will need to create your own Firebase project to build and test this locally with sync.
-   * Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project.
-   * Add an Android app (with the matching package name, e.g., `com.example.railfocus`) and an iOS app.
-   * Download the `google-services.json` and place it in the `android/app/` directory.
-   * Download the `GoogleService-Info.plist` and place it in the `ios/Runner/` directory.
-   * Enable **Authentication** (Google & Email/Password) and **Firestore Database** in your Firebase project.
+**2. Setup Firebase**
 
-3. **Install dependencies:**
-   ```sh
-   flutter pub get
-   ```
+> ⚠️ **Important:** You need to create your own Firebase project. Never commit `google-services.json` or `GoogleService-Info.plist` to version control.
 
-4. **Run the app:**
-   Select your emulator/device and run:
-   ```sh
-   flutter run
-   ```
+- Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project
+- Add an **Android** app (package name: `com.example.railfocus`) and an **iOS** app
+- Enable **Authentication** → Google & Email/Password providers
+- Enable **Cloud Firestore**
+- Download and place the config files:
+
+```
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+```
+
+**3. Install dependencies**
+```sh
+flutter pub get
+```
+
+**4. Run the app**
+```sh
+flutter run
+```
 
 ---
 
-## 🛠 Tech Stack & Architecture
+## 🤝 Contributing
 
-*   **Framework:** [Flutter](https://flutter.dev/) (Dart)
-*   **State Management:** Pure `StatefulWidget` mechanics with isolated services (Singletons) for high performance.
-*   **Backend & DB:** Firebase (Auth, Firestore) for cloud sync.
-*   **Local DB:** [Hive](https://pub.dev/packages/hive) (Extremely fast, offline-first local NoSQL).
-*   **Routing:** `go_router`
-*   **Animations:** `flutter_animate` & built-in CustomPainters.
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
+1. Fork the project
+2. Create your feature branch: `git checkout -b feature/AmazingFeature`
+3. Commit your changes: `git commit -m 'Add some AmazingFeature'`
+4. Push to the branch: `git push origin feature/AmazingFeature`
+5. Open a Pull Request
 
 ---
 
 ## 📝 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the **MIT License**. See [`LICENSE`](./LICENSE) for more information.
 
 ---
 
-<p align="center">Made with ❤️ for focused minds.</p>
-   can you enhance this
-   
+<div align="center">
+
+Made with ❤️ for focused minds.
+
+*All aboard. 🚂*
+
+</div>
