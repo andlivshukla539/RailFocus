@@ -496,9 +496,7 @@ class _FocusScreenState extends State<FocusScreen>
         _sway.stop();
       }
 
-      // App going to background — pause audio
-      _audio.pauseAmbient();
-      if (mounted) setState(() => _soundPlaying = false);
+      // Timer notification is already scheduled — it'll fire on time
       // Timer notification is already scheduled — it'll fire on time
     }
   }

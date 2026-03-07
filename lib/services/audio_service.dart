@@ -143,7 +143,7 @@ class AudioService {
       if (fadeIn) {
         // Start at zero volume, then gradually increase.
         await _ambientPlayer.setVolume(0.0);
-        await _ambientPlayer.play(AssetSource('sounds/Sleep.mp3'));
+        await _ambientPlayer.play(source);
         _isAmbientPlaying = true;
 
         // Fade in over 2 seconds.
