@@ -26,9 +26,9 @@ RailFocus is not just a Pomodoro app; it's an immersive experience. Step into th
 
 
 
-|<img src="https://github.com/user-attachments/assets/c671acdd-6a0d-4969-8564-7396ab06f388" width="250"/>|<img src="" width="250"/>|<img src="" width="250"/>|
+|<img src="https://github.com/user-attachments/assets/c671acdd-6a0d-4969-8564-7396ab06f388" width="250"/>||<img src="https://github.com/user-attachments/assets/cdea9c55-c17c-4ffd-aca8-c3d156dcf6b7" width="250"/>|
 |:---:|:---:|:---:|
-| **The Departure Hall** | **Cabin Selection** | **Active Focus Journey** |
+| **The Departure Hall** | | **Active Focus Journey** |
 
 ---
 
