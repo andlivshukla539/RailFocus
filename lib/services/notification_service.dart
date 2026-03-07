@@ -492,10 +492,21 @@ class NotificationService {
   /// [routeEmoji] — e.g. "🚄"
   /// [totalMinutes] — total session duration for the progress bar
   static Future<void> showOngoingTimer({
-    required DateTime endTime,
+    required int remainingMinutes,
+    required int remainingSeconds,
     required String routeName,
     String routeEmoji = '🚂',
+    int totalMinutes = 25,
   }) async {
+    final elapsed = (totalMinutes * 60) - (remainingMinutes * 60 + remainingSeconds);
+    final total = totalMinutes * 60;
+    final progress = total > 0 ? (elapsed / total).clamp(0.0, 1.0) : 0;
+    final maxProgress = 100;
+    final currentProgress = (progress * maxProgress).round();
+
+    final timeStr =
+        '${remainingMinutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+
     final androidDetails = AndroidNotificationDetails(
       'focus_timer',
       'Focus Timer',
@@ -504,11 +515,14 @@ class NotificationService {
       priority: Priority.low,
       ongoing: true,
       autoCancel: false,
-      // Themed ticker text mimicking a departure board
-      ticker: '$routeEmoji $routeName',
-      usesChronometer: true,
-      chronometerCountDown: true,
-      when: endTime.millisecondsSinceEpoch,
+      showProgress: true,
+      maxProgress: maxProgress,
+      progress: currentProgress,
+      ticker: '$routeEmoji $routeName ·  $timeStr remaining',
+      styleInformation: BigTextStyleInformation(
+        '$routeEmoji  $routeName\n🕐  $timeStr remaining',
+        summaryText: 'RailFocus — Focus Session Active',
+      ),
       ledColor: const Color(0xFFD4A853),
       ledOnMs: 1000,
       ledOffMs: 500,
@@ -519,18 +533,37 @@ class NotificationService {
 
     final details = NotificationDetails(android: androidDetails);
 
-    await _plugin.show(
-      id: _Ids.ongoingTimer,
-      title: '🎫  FIRST CLASS — Active Journey',
-      body: '$routeEmoji  $routeName',
-      notificationDetails: details,
-      payload: 'ongoing_timer',
-    );
+    // Using startForegroundService to prevent Android from sleeping the Dart VM
+    final androidImplementation = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidImplementation != null) {
+      await androidImplementation.startForegroundService(
+        id: _Ids.ongoingTimer,
+        title: '🎫  FIRST CLASS — Active Journey',
+        body: '$routeEmoji  $routeName  ·  $timeStr',
+        notificationDetails: androidDetails,
+        payload: 'ongoing_timer',
+      );
+    } else {
+      await _plugin.show(
+        id: _Ids.ongoingTimer,
+        title: '🎫  FIRST CLASS — Active Journey',
+        body: '$routeEmoji  $routeName  ·  $timeStr',
+        notificationDetails: details,
+        payload: 'ongoing_timer',
+      );
+    }
   }
 
   /// Dismisses the ongoing focus timer notification.
   /// Call when the session ends or the user stops early.
   static Future<void> cancelOngoingTimer() async {
+    final androidImplementation = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      await androidImplementation.stopForegroundService();
+    }
     await _plugin.cancel(id: _Ids.ongoingTimer);
     debugPrint('🔔 NotificationService: Ongoing timer notification cancelled');
   }

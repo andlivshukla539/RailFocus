@@ -394,23 +394,19 @@ class _FocusScreenState extends State<FocusScreen>
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
 
-    // Phase 8: Request notification permission on first use
-    NotificationService.requestPermission();
-
     // Phase 8: Enable wakelock (screen stays on)
     WakelockService.enable();
 
+    // Phase 8: Request notification permission dynamically before session uses it
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await NotificationService.requestPermission();
+
       _enter.forward();
       _startTimer();
       _scheduleCross();
 
       // Centralized Audio: Start ambient for this route
       _audio.playAmbient('sounds/Sleep.mp3');
-
-      if (await Permission.accessNotificationPolicy.isDenied) {
-        await Permission.accessNotificationPolicy.request();
-      }
 
       // Phase 8: Start the background-safe timer and schedule notification
       await _timerService.startSession(
@@ -550,7 +546,16 @@ class _FocusScreenState extends State<FocusScreen>
         });
       }
 
-
+      // Update the Android ongoing notification every 60 seconds.
+      if (_remSec % 60 == 0 && _remSec > 0) {
+        NotificationService.showOngoingTimer(
+          remainingMinutes: _remSec ~/ 60,
+          remainingSeconds: _remSec % 60,
+          routeName: _route.name,
+          routeEmoji: _route.emoji,
+          totalMinutes: _totalSec ~/ 60,
+        );
+      }
 
       if (_remSec == 60 || _remSec == 10) {
         HapticFeedback.mediumImpact();

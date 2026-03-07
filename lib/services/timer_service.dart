@@ -113,9 +113,11 @@ class TimerService {
 
     // Show the ongoing live-countdown notification in the status bar.
     await NotificationService.showOngoingTimer(
-      endTime: _endTime!,
+      remainingMinutes: durationMinutes,
+      remainingSeconds: 0,
       routeName: routeName,
       routeEmoji: routeEmoji,
+      totalMinutes: durationMinutes,
     );
 
     debugPrint(
@@ -170,8 +172,10 @@ class TimerService {
       routeName: _routeName,
     );
     await NotificationService.showOngoingTimer(
-      endTime: _endTime!,
+      remainingMinutes: remainingWhenPaused ~/ 60,
+      remainingSeconds: remainingWhenPaused % 60,
       routeName: _routeName,
+      totalMinutes: _durationMinutes,
     );
 
     debugPrint(
