@@ -113,11 +113,9 @@ class TimerService {
 
     // Show the ongoing live-countdown notification in the status bar.
     await NotificationService.showOngoingTimer(
-      remainingMinutes: durationMinutes,
-      remainingSeconds: 0,
+      endTime: _endTime!,
       routeName: routeName,
       routeEmoji: routeEmoji,
-      totalMinutes: durationMinutes,
     );
 
     debugPrint(
@@ -143,6 +141,7 @@ class TimerService {
 
     // Cancel the scheduled notification since we're paused.
     await NotificationService.cancelSessionEnd();
+    await NotificationService.cancelOngoingTimer();
 
     debugPrint('⏱️ TimerService: Paused — ${getRemainingSeconds()}s remaining');
   }
@@ -167,6 +166,10 @@ class TimerService {
 
     // Reschedule the notification with the new end time.
     await NotificationService.scheduleSessionEnd(
+      endTime: _endTime!,
+      routeName: _routeName,
+    );
+    await NotificationService.showOngoingTimer(
       endTime: _endTime!,
       routeName: _routeName,
     );

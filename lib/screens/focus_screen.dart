@@ -550,20 +550,7 @@ class _FocusScreenState extends State<FocusScreen>
         });
       }
 
-      // Update the Android ongoing notification every 60 seconds.
-      // Android throttles updates to ongoing notifications, so we
-      // cancel the old one and re-show a fresh one to force a refresh.
-      if (_remSec % 60 == 0 && _remSec > 0) {
-        NotificationService.cancelOngoingTimer().then((_) {
-          NotificationService.showOngoingTimer(
-            remainingMinutes: _remSec ~/ 60,
-            remainingSeconds: _remSec % 60,
-            routeName: _route.name,
-            routeEmoji: _route.emoji,
-            totalMinutes: _totalSec ~/ 60,
-          );
-        });
-      }
+
 
       if (_remSec == 60 || _remSec == 10) {
         HapticFeedback.mediumImpact();

@@ -492,22 +492,10 @@ class NotificationService {
   /// [routeEmoji] — e.g. "🚄"
   /// [totalMinutes] — total session duration for the progress bar
   static Future<void> showOngoingTimer({
-    required int remainingMinutes,
-    required int remainingSeconds,
+    required DateTime endTime,
     required String routeName,
     String routeEmoji = '🚂',
-    int totalMinutes = 25,
   }) async {
-    final elapsed = (totalMinutes * 60) -
-        (remainingMinutes * 60 + remainingSeconds);
-    final total = totalMinutes * 60;
-    final progress = (elapsed / total).clamp(0.0, 1.0);
-    final maxProgress = 100;
-    final currentProgress = (progress * maxProgress).round();
-
-    final timeStr =
-        '${remainingMinutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
-
     final androidDetails = AndroidNotificationDetails(
       'focus_timer',
       'Focus Timer',
@@ -516,15 +504,11 @@ class NotificationService {
       priority: Priority.low,
       ongoing: true,
       autoCancel: false,
-      showProgress: true,
-      maxProgress: maxProgress,
-      progress: currentProgress,
       // Themed ticker text mimicking a departure board
-      ticker: '$routeEmoji $routeName ·  $timeStr remaining',
-      styleInformation: BigTextStyleInformation(
-        '$routeEmoji  $routeName\n🕐  $timeStr remaining',
-        summaryText: 'RailFocus — Focus Session Active',
-      ),
+      ticker: '$routeEmoji $routeName',
+      usesChronometer: true,
+      chronometerCountDown: true,
+      when: endTime.millisecondsSinceEpoch,
       ledColor: const Color(0xFFD4A853),
       ledOnMs: 1000,
       ledOffMs: 500,
@@ -538,7 +522,7 @@ class NotificationService {
     await _plugin.show(
       id: _Ids.ongoingTimer,
       title: '🎫  FIRST CLASS — Active Journey',
-      body: '$routeEmoji  $routeName  ·  $timeStr',
+      body: '$routeEmoji  $routeName',
       notificationDetails: details,
       payload: 'ongoing_timer',
     );
