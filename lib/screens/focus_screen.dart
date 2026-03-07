@@ -312,6 +312,7 @@ class _FocusScreenState extends State<FocusScreen>
   Timer? _tick;
   bool _paused = false;
   bool _done = false;
+  bool _sessionStarted = false; // guard: true only after TimerService.startSession() completes
   final Set<int> _shownMilestones = {};
 
   // ── Animation controllers ──────────────────────────────────
@@ -412,11 +413,13 @@ class _FocusScreenState extends State<FocusScreen>
       }
 
       // Phase 8: Start the background-safe timer and schedule notification
-      _timerService.startSession(
+      await _timerService.startSession(
         durationMinutes: widget.durationMinutes ?? 25,
         routeName: _route.name,
         routeEmoji: _route.emoji,
       );
+      // Mark session as truly started — lifecycle events are now safe to act on
+      _sessionStarted = true;
 
       // Cabin: go active and subscribe to updates
       CabinService.instance.setActive(true);
@@ -459,6 +462,11 @@ class _FocusScreenState extends State<FocusScreen>
 
       // App came back from background.
       // Recalculate remaining time from wall clock.
+      // Only act if the session has actually been started — the 'resumed'
+      // event fires on first open BEFORE startSession() completes, which
+      // would make getRemainingSeconds() return 0 and end the session early.
+      if (!_sessionStarted) return;
+
       final remaining = _timerService.getRemainingSeconds();
 
       if (remaining <= 0 && !_done) {
@@ -473,12 +481,12 @@ class _FocusScreenState extends State<FocusScreen>
             _progN.value = _prog;
           });
         }
-      }
 
-      // Resume audio if it was playing
-      if (!_paused) {
-        _audio.resumeAmbient();
-        if (mounted) setState(() => _soundPlaying = true);
+        // Resume audio if it was playing
+        if (!_paused) {
+          _audio.resumeAmbient();
+          if (mounted) setState(() => _soundPlaying = true);
+        }
       }
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
@@ -615,13 +623,11 @@ class _FocusScreenState extends State<FocusScreen>
       _sway.stop();
       _audio.pauseAmbient();
       setState(() => _soundPlaying = false);
-      _timerService.pause(); // Phase 8: Pause background timer
     } else {
       _scroll.repeat();
       _sway.repeat(reverse: true);
       _audio.resumeAmbient();
       setState(() => _soundPlaying = true);
-      _timerService.resume(); // Phase 8: Resume + reschedule notif
 
       // Sync displayed time with background timer
       setState(() {

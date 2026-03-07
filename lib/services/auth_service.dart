@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'firestore_sync_service.dart';
 
 class AuthService {
   AuthService._();
@@ -23,10 +24,13 @@ class AuthService {
     required String password,
   }) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
+      final cred = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
+      // Restore user data from cloud if local data is empty or outdated.
+      await FirestoreSyncService.instance.restoreIfNeeded();
+      return cred;
     } on FirebaseAuthException catch (e) {
       throw AuthException.fromFirebase(e);
     }
@@ -70,7 +74,10 @@ class AuthService {
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
-      return await _auth.signInWithCredential(credential);
+      final cred = await _auth.signInWithCredential(credential);
+      // Restore user data from cloud if local data is empty or outdated.
+      await FirestoreSyncService.instance.restoreIfNeeded();
+      return cred;
     } on GoogleSignInException catch (e) {
       // User cancelled or sign-in was dismissed — not a hard error
       if (e.code == GoogleSignInExceptionCode.canceled) return null;

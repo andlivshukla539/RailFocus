@@ -10,6 +10,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:hive_flutter/hive_flutter.dart';
+
+import '../models/session_model.dart';
 import 'storage_service.dart';
 
 class FirestoreSyncService {
@@ -96,37 +99,85 @@ class FirestoreSyncService {
   // RESTORE (cloud → local)
   // ══════════════════════════════════════
 
-  /// Check if cloud data exists and is newer, then restore
+  /// Restores all user data (stats + sessions) from Firestore.
+  /// Called after a successful login to bring back the user's progress.
+  /// Only runs if local data is empty to avoid overwriting newer local data.
   Future<bool> restoreIfNeeded() async {
     try {
       final doc = _userDoc;
-      if (doc == null) return false;
+      if (doc == null) {
+        debugPrint('☁️ Firestore: No user logged in, skipping restore');
+        return false;
+      }
 
       final snapshot = await doc.get();
-      if (!snapshot.exists) return false;
+      if (!snapshot.exists) {
+        debugPrint('☁️ Firestore: No cloud data found for this user');
+        return false;
+      }
 
       final data = snapshot.data() as Map<String, dynamic>?;
       if (data == null) return false;
 
-      // Check if local is empty (fresh install)
+      // Only restore if local is completely empty.
+      // This prevents overwriting data from a device that already has sessions.
       final localSessions = _storage.getTotalSessions();
       if (localSessions > 0) {
-        debugPrint('☁️ Firestore: Local data exists, skipping restore');
+        debugPrint('☁️ Firestore: Local data exists ($localSessions sessions), skipping restore');
         return false;
       }
 
-      // Restore stats
+      bool restored = false;
+
+      // ── Restore Stats ─────────────────────────────────────────
       final stats = data['stats'] as Map<String, dynamic>?;
       if (stats != null) {
+        final streak = stats['streak'] as int? ?? 0;
+        final totalSessions = stats['totalSessions'] as int? ?? 0;
+        final totalHours = (stats['totalHours'] as num?)?.toDouble() ?? 0.0;
         final bricks = stats['bricks'] as int? ?? 0;
-        if (bricks > 0) {
-          await _storage.addBricks(bricks);
-        }
-        debugPrint('☁️ Firestore: Stats restored');
+
+        final statsBox = Hive.box('stats');
+        if (streak > 0) await statsBox.put('streak', streak);
+        if (totalSessions > 0) await statsBox.put('totalSessions', totalSessions);
+        // Convert hours back to minutes for storage
+        if (totalHours > 0) await statsBox.put('totalMinutes', (totalHours * 60).round());
+        if (bricks > 0) await _storage.addBricks(bricks);
+
+        debugPrint('☁️ Firestore: Stats restored — streak=$streak, sessions=$totalSessions, hours=$totalHours');
+        restored = true;
       }
 
-      debugPrint('☁️ Firestore: Restore complete');
-      return true;
+      // ── Restore Sessions ──────────────────────────────────────
+      final rawSessions = data['sessions'] as List<dynamic>?;
+      if (rawSessions != null && rawSessions.isNotEmpty) {
+        final sessionsBox = Hive.box('sessions');
+        for (final raw in rawSessions) {
+          try {
+            final map = Map<String, dynamic>.from(raw as Map);
+            // Firestore stores startTime as ISO string; fromMap expects milliseconds int
+            if (map['startTime'] is String) {
+              map['startTime'] = DateTime.parse(map['startTime'] as String).millisecondsSinceEpoch;
+            }
+            // Ensure required fields have sensible defaults
+            map['id'] ??= DateTime.now().microsecondsSinceEpoch.toString();
+            map['completed'] ??= false;
+            map['durationMinutes'] ??= 0;
+            map['routeName'] ??= '';
+            final session = JourneySession.fromMap(map);
+            await sessionsBox.add(session.toMap());
+          } catch (e) {
+            debugPrint('⚠️ Skipped malformed session during restore: $e');
+          }
+        }
+        debugPrint('☁️ Firestore: ${rawSessions.length} sessions restored');
+        restored = true;
+      }
+
+      if (restored) {
+        debugPrint('☁️ Firestore: Full restore complete ✅');
+      }
+      return restored;
     } catch (e) {
       debugPrint('🔴 Firestore restore error: $e');
       return false;
