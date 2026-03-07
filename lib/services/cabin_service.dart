@@ -99,9 +99,10 @@ class CabinService {
   Future<Map<String, String>> _getUserInfo() async {
     final user = FirebaseAuth.instance.currentUser;
     final prefs = await SharedPreferences.getInstance();
-    final name = user?.displayName?.split(' ').first
-        ?? prefs.getString('passenger_name')
-        ?? 'Traveller';
+    final String? passengerName = prefs.getString('passenger_name');
+    final String name = (passengerName != null && passengerName.trim().isNotEmpty && passengerName != 'Traveller')
+        ? passengerName.trim()
+        : (user?.displayName?.split(' ').first ?? 'Traveller');
     const avatars = ['🚂', '🎩', '🌙', '⭐', '🌿', '💎', '🏔️', '🌊'];
     final avatar = avatars[name.hashCode.abs() % avatars.length];
     return {'uid': user?.uid ?? 'guest_${DateTime.now().millisecondsSinceEpoch}', 'name': name, 'avatar': avatar};

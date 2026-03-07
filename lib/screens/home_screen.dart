@@ -323,6 +323,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   String get _greeting {
+    if (_passengerName.isNotEmpty && _passengerName != 'Traveller') {
+      final firstName = _passengerName.split(' ').first;
+      return 'Hi, $firstName 👋';
+    }
     final user = AuthService.instance.currentUser;
     if (user != null && user.displayName != null && user.displayName!.isNotEmpty) {
       final firstName = user.displayName!.split(' ').first;
